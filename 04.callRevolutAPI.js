@@ -140,9 +140,11 @@ function callRevolutAPI(endpoint, accountName) {
               accountName,
               item.id || '',
               account.id || '',
-              item.updated_at || '',
               item.name || '',
               item.revtag || '',
+              item.state || '',
+              item.created_at || '',
+              item.updated_at || '',
               account.account_no || '',
               account.sort_code || '',
               account.iban || '',
@@ -151,7 +153,8 @@ function callRevolutAPI(endpoint, accountName) {
               account.currency || '',
               account.address ? account.address.city : '',
               account.address ? account.address.postcode : '',
-              account.address ? account.address.country : ''
+              account.address ? account.address.country : '',
+              '' // Extra column to match the 17 columns in the range
           ]);
       } else {
           return [
@@ -160,11 +163,11 @@ function callRevolutAPI(endpoint, accountName) {
                   accountName,
                   item.id || '',
                   '', // No account.id
-                  item.updated_at || '',
                   item.name || '',
                   item.revtag || '',
-                  //item.state || '',
-                  //item.created_at || '',
+                  item.state || '',
+                  item.created_at || '',
+                  item.updated_at || '',
                   '', // Empty account fields
                   '',
                   '',
@@ -172,12 +175,13 @@ function callRevolutAPI(endpoint, accountName) {
                   '',
                   '',
                   '',
+                  '', // Empty column for address fields
                   '',
-                  '',
-                  ''
+                  '', // Extra column to match the 17 columns in the range
               ]
           ];
       }
+
       });
       break;
 

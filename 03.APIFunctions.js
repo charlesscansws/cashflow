@@ -7,7 +7,7 @@ function removeDuplicateRows(sheet, lastImportStartRow, lastImportNumRows) {
   // Define the start row for checking duplicates (row 2 onwards)
   var checkStartRow = 2;
   var lastRow = sheet.getLastRow();
-  var checkNumRows = lastRow - checkStartRow + 1;
+  var checkNumRows = lastRow - checkStartRow + 2;
 
   // Check if there are enough rows to process
   if (checkNumRows < 1) {
