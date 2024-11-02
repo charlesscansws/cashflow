@@ -2,6 +2,28 @@
 <html>
 <head>
   <base target="_top">
+  <!-- Include Materialize CSS -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css" rel="stylesheet">
+  <!-- Include Materialize JavaScript -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+  <style>
+    /* Style for the message box */
+    #messageBox {
+      padding: 10px;
+      margin-top: 15px;
+      border-radius: 5px;
+      display: none;
+      text-align: center;
+    }
+    .success {
+      background-color: #d4edda;
+      color: #155724;
+    }
+    .error {
+      background-color: #f8d7da;
+      color: #721c24;
+    }
+  </style>
 </head>
 <body onload="populateDropdowns()">
 
@@ -9,38 +31,44 @@
     <h5>Delete Counterparty</h5>
     
     <!-- Filters and Search Button -->
-    <div>
-      <label>Account Name</label>
-      <select id="accountFilter">
-        <option value="" disabled selected>Choose Account</option>
-      </select>
-
-      <label>Counterparty Name (Optional)</label>
-      <select id="counterpartyFilter">
-        <option value="" selected>Choose Counterparty</option>
-      </select>
-
-      <button onclick="searchCounterparties()">Search</button>
+    <div class="row">
+      <div class="input-field col s5">
+        <select id="accountFilter">
+          <option value="" disabled selected>Choose Account</option>
+        </select>
+        <label>Account Name</label>
+      </div>
+      <div class="input-field col s5">
+        <select id="counterpartyFilter">
+          <option value="" selected>Choose Counterparty (Optional)</option>
+        </select>
+        <label>Counterparty Name</label>
+      </div>
+      <div class="col s2">
+        <button class="btn waves-effect waves-light" onclick="searchCounterparties()">Search</button>
+      </div>
     </div>
 
     <!-- Message Box -->
-    <div id="messageBox" style="display: none; margin-top: 10px;"></div>
+    <div id="messageBox"></div>
 
     <!-- Table -->
-    <div id="counterpartyTable" style="margin-top: 15px;">
+    <div id="counterpartyTable" class="section">
       <!-- Table will be populated dynamically -->
     </div>
     
     <!-- Delete Button -->
-    <button onclick="deleteSelectedCounterparties()">Delete</button>
+    <button class="btn red waves-effect waves-light" onclick="deleteSelectedCounterparties()">Delete</button>
   </div>
 
   <script>
+    // Populate dropdowns with account and counterparty names from 'API - Counterparties' sheet
     function populateDropdowns() {
       google.script.run.withSuccessHandler(function(data) {
         const accountSelect = document.getElementById('accountFilter');
         const counterpartySelect = document.getElementById('counterpartyFilter');
 
+        // Populate Account Name dropdown with data from 'API - Counterparties'!B2:B
         data.accounts.forEach(account => {
           const option = document.createElement('option');
           option.value = account;
@@ -48,22 +76,28 @@
           accountSelect.appendChild(option);
         });
 
+        // Populate Counterparty Name dropdown with data from 'API - Counterparties'!E2:E
         data.counterparties.forEach(counterparty => {
           const option = document.createElement('option');
-          option.value = counterparty;
-          option.text = counterparty;
+          option.value = counterparty.counterparty_id;  // counterparty_id as the value
+          option.text = counterparty.counterparty_name;  // counterparty_name as the display text
           counterpartySelect.appendChild(option);
         });
+
+        M.FormSelect.init(accountSelect);
+        M.FormSelect.init(counterpartySelect);
       }).getDropdownData();
     }
 
+    // Display a message in the message box
     function showMessage(text, type) {
       const messageBox = document.getElementById('messageBox');
       messageBox.innerHTML = text;
-      messageBox.style.color = type === 'success' ? 'green' : 'red';
+      messageBox.className = type === 'success' ? 'success' : 'error';
       messageBox.style.display = 'block';
     }
 
+    // Search counterparties based on selected filters
     function searchCounterparties() {
       const accountName = document.getElementById('accountFilter').value;
       const counterpartyName = document.getElementById('counterpartyFilter').value;
@@ -74,16 +108,13 @@
 
         if (data.length > 0) {
           const table = document.createElement('table');
-          table.style.width = '100%';
-          table.style.borderCollapse = 'collapse';
+          table.className = 'striped';
 
           const thead = document.createElement('thead');
           const headerRow = document.createElement('tr');
           ['Select', 'Account Name', 'Counterparty Name'].forEach(header => {
             const th = document.createElement('th');
             th.innerText = header;
-            th.style.border = '1px solid #000';
-            th.style.padding = '5px';
             headerRow.appendChild(th);
           });
           thead.appendChild(headerRow);
@@ -96,22 +127,17 @@
             const tdCheckbox = document.createElement('td');
             const checkbox = document.createElement('input');
             checkbox.type = 'checkbox';
-            checkbox.value = row.counterparty_id;
+            checkbox.className = 'filled-in';
+            checkbox.value = row.counterparty_id;  // Set checkbox value to counterparty_id from column C
             tdCheckbox.appendChild(checkbox);
-            tdCheckbox.style.border = '1px solid #000';
-            tdCheckbox.style.padding = '5px';
             tr.appendChild(tdCheckbox);
 
             const tdAccount = document.createElement('td');
             tdAccount.innerText = row.account_name;
-            tdAccount.style.border = '1px solid #000';
-            tdAccount.style.padding = '5px';
             tr.appendChild(tdAccount);
 
             const tdCounterparty = document.createElement('td');
-            tdCounterparty.innerText = row.counterparty_name;
-            tdCounterparty.style.border = '1px solid #000';
-            tdCounterparty.style.padding = '5px';
+            tdCounterparty.innerText = row.counterparty_name;  // Use counterparty name from column E
             tr.appendChild(tdCounterparty);
 
             tbody.appendChild(tr);
@@ -124,6 +150,7 @@
       }).getFilteredCounterparties(accountName, counterpartyName);
     }
 
+    // Delete selected counterparties
     function deleteSelectedCounterparties() {
       const checkboxes = document.querySelectorAll('#counterpartyTable input[type="checkbox"]:checked');
       const idsToDelete = Array.from(checkboxes).map(cb => cb.value);

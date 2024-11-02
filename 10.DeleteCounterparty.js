@@ -36,22 +36,63 @@ function getFilteredCounterparties(accountName, counterpartyName) {
 }
 
 // Delete selected counterparties using Revolut API
-function deleteCounterparties(counterpartyIds) {
-  const token = getAuthToken();  // Replace with actual token retrieval method
+function deleteCounterparties(idsToDelete) {
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('API - Counterparties');
+  if (!sheet) {
+    Logger.log("Sheet 'API - Counterparties' not found");
+    return { success: false, error: "Sheet 'API - Counterparties' not found" };
+  }
 
-  counterpartyIds.forEach(id => {
-    const url = `https://b2b.revolut.com/api/1.0/counterparty/${id}`;
+  // Loop through each ID and send a DELETE request
+  const apiUrl = 'https://b2b.revolut.com/api/1.0/counterparty/';
+  let errors = [];
+  
+  idsToDelete.forEach(id => {
+    const url = apiUrl + id;
     const options = {
       method: 'DELETE',
       headers: {
-        Authorization: `Bearer ${token}`
-      }
+        Authorization: 'Bearer ' + getBearerToken(), // replace with your function to retrieve the token
+      },
+      muteHttpExceptions: true
     };
     
-    try {
-      UrlFetchApp.fetch(url, options);
-    } catch (error) {
-      console.error(`Failed to delete counterparty ${id}:`, error);
+    const response = UrlFetchApp.fetch(url, options);
+    const statusCode = response.getResponseCode();
+    
+    if (statusCode !== 200 && statusCode !== 204) {
+      Logger.log(`Failed to delete counterparty with ID ${id}. Status: ${statusCode}`);
+      errors.push(`Failed to delete counterparty with ID ${id}.`);
     }
   });
+
+  if (errors.length > 0) {
+    return { success: false, error: errors.join(" ") };
+  } else {
+    // Clear checkboxes after deletion
+    const checkboxRange = sheet.getRange('A2:A' + sheet.getLastRow());
+    checkboxRange.uncheck();
+    return { success: true };
+  }
+}
+
+function getSelectedCounterpartiesForDeletion() {
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('API - Counterparties');
+  if (!sheet) {
+    Logger.log("Sheet 'API - Counterparties' not found");
+    return [];
+  }
+
+  const checkboxes = sheet.getRange('A2:A' + sheet.getLastRow()).getValues();
+  const ids = sheet.getRange('C2:C' + sheet.getLastRow()).getValues();
+  
+  const idsToDelete = [];
+  
+  for (let i = 0; i < checkboxes.length; i++) {
+    if (checkboxes[i][0] === true) {  // Check if the checkbox is checked
+      idsToDelete.push(ids[i][0]);  // Get the corresponding counterparty_id from column C
+    }
+  }
+  
+  return idsToDelete;
 }

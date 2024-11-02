@@ -1,73 +1,82 @@
 function removeDuplicateRows(sheet, lastImportStartRow, lastImportNumRows) {
-  // Log the starting point of duplicate removal
-  Logger.log(`removeDuplicateRows called for sheet: ${sheet.getName()}`);
-
   var sheetName = sheet.getName();
-
+  
   // Define the start row for checking duplicates (row 2 onwards)
   var checkStartRow = 2;
   var lastRow = sheet.getLastRow();
-  var checkNumRows = lastRow - checkStartRow + 2;
-
+  var checkNumRows = lastRow - checkStartRow + 1;
+  
   // Check if there are enough rows to process
   if (checkNumRows < 1) {
     Logger.log(`No rows to check for duplicates on sheet: ${sheetName}`);
     return;
   }
 
-  // Get all the data from the sheet starting from row 2
+  // Define the column index based on the sheet name
+  let duplicateCheckColumnIndex;
+  if (sheetName === 'API - Counterparties') {
+    duplicateCheckColumnIndex = 2; // Column C for Counterparties (0-based index for `getValues()`)
+  } else if (sheetName === 'API - Accounts' || sheetName === 'API - Transactions') {
+    duplicateCheckColumnIndex = 1; // Column B for Accounts and Transactions
+  } else {
+    Logger.log(`Sheet ${sheetName} does not have a defined column for duplicate removal`);
+    return;
+  }
+  
+  // Get all data from the sheet starting from row 2
   var dataRange = sheet.getRange(checkStartRow, 1, checkNumRows, sheet.getLastColumn());
   var data = dataRange.getValues();
-
+  
   // Map to store the latest row index for each unique key
   var keyMap = new Map();
-
+  
   // Identify range of the latest import
   var latestImportEndRow = lastImportStartRow + lastImportNumRows - 1;
-
+  
   // Iterate over each row, starting from the defined check start row
   for (var i = 0; i < data.length; i++) {
     var sheetRow = i + checkStartRow; // Actual sheet row
-    var id = data[i][1]; // Column B has index 1
-
+    var id = data[i][duplicateCheckColumnIndex]; // Adjusted for column index
+    
     // Only consider rows with non-empty IDs
     if (id) {
-      // Generate a unique key based on the sheet name
-      var uniqueKey = id;
-
       // Store the row number of the last occurrence of each unique key
-      if (!keyMap.has(uniqueKey) || sheetRow > keyMap.get(uniqueKey)) {
-        keyMap.set(uniqueKey, sheetRow);
+      if (!keyMap.has(id) || sheetRow > keyMap.get(id)) {
+        keyMap.set(id, sheetRow);
       }
     }
   }
-
+  
   // Array to store indices of rows to be deleted
   var rowsToDelete = [];
-
+  
   // Iterate again to find duplicates
   for (var i = 0; i < data.length; i++) {
     var sheetRow = i + checkStartRow; // Actual sheet row
-    var id = data[i][1];
-
+    var id = data[i][duplicateCheckColumnIndex];
+    
     // Only consider rows with non-empty IDs
     if (id) {
-      var uniqueKey = id;
-
       // Check if this row is a duplicate and should be removed
-      // Ensure that we only mark rows for deletion if they are before the latest import
-      if (keyMap.has(uniqueKey) && keyMap.get(uniqueKey) !== sheetRow && sheetRow < lastImportStartRow) {
+      // Only mark rows for deletion if they are before the latest import
+      if (keyMap.has(id) && keyMap.get(id) !== sheetRow && sheetRow < lastImportStartRow) {
         rowsToDelete.push(sheetRow);
       }
     }
   }
-
+  
   // Delete rows in reverse order to prevent index shift
   rowsToDelete.reverse().forEach(rowIndex => {
     sheet.deleteRow(rowIndex);
   });
-
+  
   Logger.log(`Removed duplicates based on unique keys in sheet: ${sheetName}`);
+  
+  // Add checkboxes in column A for 'API - Counterparties' if rows remain
+  if (sheetName === 'API - Counterparties' && sheet.getLastRow() > 1) {
+    const checkboxRange = sheet.getRange(`A2:A${sheet.getLastRow()}`);
+    checkboxRange.insertCheckboxes();
+  }
 }
 
 // Remove account tokens
