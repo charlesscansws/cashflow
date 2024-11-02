@@ -1,0 +1,18 @@
+git add .
+git commit -m "Token Refresh Rules"
+git push
+
+git add .
+git commit -m "Counterparty"
+git push
+
+'API - Counterparties'A2:A includes the checkboxes
+'API - Counterparties'B2:B includes the accountName
+'API - Counterparties'C2:C includes the account.id
+'API - Counterparties'D2:D includes the item.name
+
+'API - Assets'B2:B includes the accountName
+'API - Assets'C2:C includes the clientAssertion
+'API - Assets'D2:D includes the refreshToken
+'API - Assets'E2:E includes the accountName
+
