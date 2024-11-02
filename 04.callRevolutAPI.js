@@ -127,88 +127,57 @@ function callRevolutAPI(endpoint, accountName) {
 
     // Handle multiple accounts per counterparty
     case 'counterparties':
-      Logger.log('Processing counterparties...');
-      Logger.log('Raw data: ' + JSON.stringify(values)); // Log the raw data
+      //Logger.log('Processing counterparties...');
+      //Logger.log('Raw data: ' + JSON.stringify(values)); // Log the raw data
 
       // Handle multiple accounts per counterparty
       rows = values.flatMap(item => {
-        Logger.log('Counterparty: ' + JSON.stringify(item)); // Log each counterparty
+        //Logger.log('Counterparty: ' + JSON.stringify(item)); // Log each counterparty
 
-        if (Array.isArray(item.accounts) && item.accounts.length > 0) {
-          return item.accounts.map(account => {
-            Logger.log('Account: ' + JSON.stringify(account)); // Log each account
-
-            return [
-              '',
+      if (Array.isArray(item.accounts) && item.accounts.length > 0) {
+          return item.accounts.map(account => [
+              '', // Placeholder
               accountName,
               item.id || '',
               account.id || '',
-              //item.company_name || '', // Updated to include company name
-              //item.profile_type || '',
-              //item.individual_name ? item.individual_name.first_name : '',
-              //item.individual_name ? item.individual_name.last_name : '',
+              item.updated_at || '',
               item.name || '',
               item.revtag || '',
-              item.state || '',
-              item.created_at || '',
-              item.updated_at || '',
               account.account_no || '',
               account.sort_code || '',
               account.iban || '',
               account.bic || '',
               account.bank_country || '',
               account.currency || '',
-              //account.type || '',
-              //account.recipient_charges || '',
-              //account.routing_number || '',
-              //account.clabe || '',
-              //account.ifsc || '',
-              //account.bsb_code || '',
-              //account.address ? account.address.street_line1 : '',
-              //account.address ? account.address.street_line2 : '',
-              //account.address ? account.address.region : '',
-              //account.address ? account.address.city : '',
-              //account.address ? account.address.country : '',
-              //account.address ? account.address.postcode : ''
-            ];
-          });
-        } else {
-          Logger.log('No accounts for this counterparty.');
+              account.address ? account.address.city : '',
+              account.address ? account.address.postcode : '',
+              account.address ? account.address.country : ''
+          ]);
+      } else {
           return [
-            [
-              accountName,
-              item.id || '',
-              item.company_name || '',
-              item.profile_type || '',
-              item.individual_name ? item.individual_name.first_name : '',
-              item.individual_name ? item.individual_name.last_name : '',
-              item.name || '',
-              item.revtag || '',
-              item.state || '',
-              item.created_at || '',
-              item.updated_at || '',
-              '', // Empty account fields
-              '',
-              '',
-              '',
-              '',
-              '',
-              '',
-              '',
-              '',
-              '',
-              '',
-              '',
-              '',
-              '',
-              '',
-              '',
-              '',
-              '',
-              ''
-            ]
+              [
+                  '', // Placeholder
+                  accountName,
+                  item.id || '',
+                  '', // No account.id
+                  item.updated_at || '',
+                  item.name || '',
+                  item.revtag || '',
+                  //item.state || '',
+                  //item.created_at || '',
+                  '', // Empty account fields
+                  '',
+                  '',
+                  '',
+                  '',
+                  '',
+                  '',
+                  '',
+                  '',
+                  ''
+              ]
           ];
-        }
+      }
       });
       break;
 
