@@ -139,36 +139,37 @@ function callRevolutAPI(endpoint, accountName) {
             Logger.log('Account: ' + JSON.stringify(account)); // Log each account
 
             return [
+              '',
               accountName,
               item.id || '',
-              item.company_name || '', // Updated to include company name
-              item.profile_type || '',
-              item.individual_name ? item.individual_name.first_name : '',
-              item.individual_name ? item.individual_name.last_name : '',
+              account.id || '',
+              //item.company_name || '', // Updated to include company name
+              //item.profile_type || '',
+              //item.individual_name ? item.individual_name.first_name : '',
+              //item.individual_name ? item.individual_name.last_name : '',
               item.name || '',
               item.revtag || '',
               item.state || '',
               item.created_at || '',
               item.updated_at || '',
-              account.id || '',
               account.account_no || '',
               account.sort_code || '',
               account.iban || '',
               account.bic || '',
               account.bank_country || '',
               account.currency || '',
-              account.type || '',
-              account.recipient_charges || '',
-              account.routing_number || '',
-              account.clabe || '',
-              account.ifsc || '',
-              account.bsb_code || '',
-              account.address ? account.address.street_line1 : '',
-              account.address ? account.address.street_line2 : '',
-              account.address ? account.address.region : '',
-              account.address ? account.address.city : '',
-              account.address ? account.address.country : '',
-              account.address ? account.address.postcode : ''
+              //account.type || '',
+              //account.recipient_charges || '',
+              //account.routing_number || '',
+              //account.clabe || '',
+              //account.ifsc || '',
+              //account.bsb_code || '',
+              //account.address ? account.address.street_line1 : '',
+              //account.address ? account.address.street_line2 : '',
+              //account.address ? account.address.region : '',
+              //account.address ? account.address.city : '',
+              //account.address ? account.address.country : '',
+              //account.address ? account.address.postcode : ''
             ];
           });
         } else {

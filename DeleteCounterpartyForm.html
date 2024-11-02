@@ -2,46 +2,40 @@
 <html>
 <head>
   <base target="_top">
-  <!-- Include Materialize CSS -->
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css" rel="stylesheet">
-  <!-- Include Materialize JavaScript -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
 </head>
 <body onload="populateDropdowns()">
 
   <div class="container">
     <h5>Delete Counterparty</h5>
     
-    <!-- Filters -->
-    <div class="row">
-      <div class="input-field col s6">
-        <select id="accountFilter">
-          <option value="" disabled selected>Choose Account</option>
-        </select>
-        <label>Account Name</label>
-      </div>
-      <div class="input-field col s6">
-        <select id="counterpartyFilter">
-          <option value="" disabled selected>Choose Counterparty</option>
-        </select>
-        <label>Counterparty Name</label>
-      </div>
+    <!-- Filters and Search Button -->
+    <div>
+      <label>Account Name</label>
+      <select id="accountFilter">
+        <option value="" disabled selected>Choose Account</option>
+      </select>
+
+      <label>Counterparty Name (Optional)</label>
+      <select id="counterpartyFilter">
+        <option value="" selected>Choose Counterparty</option>
+      </select>
+
+      <button onclick="searchCounterparties()">Search</button>
     </div>
-    
-    <!-- Search Button -->
-    <button class="btn waves-effect waves-light" onclick="searchCounterparties()">Search</button>
-    
+
+    <!-- Message Box -->
+    <div id="messageBox" style="display: none; margin-top: 10px;"></div>
+
     <!-- Table -->
-    <div id="counterpartyTable" class="section">
+    <div id="counterpartyTable" style="margin-top: 15px;">
       <!-- Table will be populated dynamically -->
     </div>
     
     <!-- Delete Button -->
-    <button class="btn red waves-effect waves-light" onclick="deleteSelectedCounterparties()">Delete</button>
+    <button onclick="deleteSelectedCounterparties()">Delete</button>
   </div>
 
   <script>
-    // Populate dropdowns with account and counterparty names
     function populateDropdowns() {
       google.script.run.withSuccessHandler(function(data) {
         const accountSelect = document.getElementById('accountFilter');
@@ -60,30 +54,36 @@
           option.text = counterparty;
           counterpartySelect.appendChild(option);
         });
-
-        M.FormSelect.init(accountSelect);
-        M.FormSelect.init(counterpartySelect);
       }).getDropdownData();
     }
 
-    // Search counterparties based on selected filters
+    function showMessage(text, type) {
+      const messageBox = document.getElementById('messageBox');
+      messageBox.innerHTML = text;
+      messageBox.style.color = type === 'success' ? 'green' : 'red';
+      messageBox.style.display = 'block';
+    }
+
     function searchCounterparties() {
       const accountName = document.getElementById('accountFilter').value;
       const counterpartyName = document.getElementById('counterpartyFilter').value;
-      
+
       google.script.run.withSuccessHandler(function(data) {
         const tableDiv = document.getElementById('counterpartyTable');
         tableDiv.innerHTML = '';  // Clear previous table
 
         if (data.length > 0) {
           const table = document.createElement('table');
-          table.className = 'striped';
-          
+          table.style.width = '100%';
+          table.style.borderCollapse = 'collapse';
+
           const thead = document.createElement('thead');
           const headerRow = document.createElement('tr');
           ['Select', 'Account Name', 'Counterparty Name'].forEach(header => {
             const th = document.createElement('th');
             th.innerText = header;
+            th.style.border = '1px solid #000';
+            th.style.padding = '5px';
             headerRow.appendChild(th);
           });
           thead.appendChild(headerRow);
@@ -96,17 +96,22 @@
             const tdCheckbox = document.createElement('td');
             const checkbox = document.createElement('input');
             checkbox.type = 'checkbox';
-            checkbox.className = 'filled-in';
             checkbox.value = row.counterparty_id;
             tdCheckbox.appendChild(checkbox);
+            tdCheckbox.style.border = '1px solid #000';
+            tdCheckbox.style.padding = '5px';
             tr.appendChild(tdCheckbox);
 
             const tdAccount = document.createElement('td');
             tdAccount.innerText = row.account_name;
+            tdAccount.style.border = '1px solid #000';
+            tdAccount.style.padding = '5px';
             tr.appendChild(tdAccount);
 
             const tdCounterparty = document.createElement('td');
             tdCounterparty.innerText = row.counterparty_name;
+            tdCounterparty.style.border = '1px solid #000';
+            tdCounterparty.style.padding = '5px';
             tr.appendChild(tdCounterparty);
 
             tbody.appendChild(tr);
@@ -119,18 +124,25 @@
       }).getFilteredCounterparties(accountName, counterpartyName);
     }
 
-    // Delete selected counterparties
     function deleteSelectedCounterparties() {
       const checkboxes = document.querySelectorAll('#counterpartyTable input[type="checkbox"]:checked');
       const idsToDelete = Array.from(checkboxes).map(cb => cb.value);
 
       if (idsToDelete.length > 0) {
-        google.script.run.withSuccessHandler(function() {
-          M.toast({html: 'Selected counterparties deleted successfully!'});
+        showMessage('In progress...', 'success');
+
+        google.script.run.withSuccessHandler(function(response) {
+          if (response.success) {
+            showMessage('Counterparties deleted successfully. You can close the window.', 'success');
+          } else {
+            showMessage('Error: ' + response.error, 'error');
+          }
           searchCounterparties(); // Refresh the table
+        }).withFailureHandler(function(error) {
+          showMessage('Error: ' + error.message, 'error');
         }).deleteCounterparties(idsToDelete);
       } else {
-        M.toast({html: 'Please select at least one counterparty to delete.'});
+        showMessage('Please select at least one counterparty to delete.', 'error');
       }
     }
   </script>
