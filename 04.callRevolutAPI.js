@@ -138,13 +138,13 @@ function callRevolutAPI(endpoint, accountName) {
           return item.accounts.map(account => [
               '', // Placeholder
               accountName,
-              item.id || '',
+              //item.id || '',
               account.id || '',
               item.name || '',
               item.revtag || '',
-              item.state || '',
-              item.created_at || '',
-              item.updated_at || '',
+              //item.state || '',
+              //item.created_at || '',
+              //item.updated_at || '',
               account.account_no || '',
               account.sort_code || '',
               account.iban || '',
@@ -161,13 +161,13 @@ function callRevolutAPI(endpoint, accountName) {
               [
                   '', // Placeholder
                   accountName,
-                  item.id || '',
+                  //item.id || '',
                   '', // No account.id
                   item.name || '',
                   item.revtag || '',
-                  item.state || '',
-                  item.created_at || '',
-                  item.updated_at || '',
+                  //item.state || '',
+                  //item.created_at || '',
+                  //item.updated_at || '',
                   '', // Empty account fields
                   '',
                   '',
