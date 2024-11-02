@@ -1,117 +1,139 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <base target="_top">
-  </head>
-  <body>
+<head>
+  <base target="_top">
+  <!-- Include Materialize CSS -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css" rel="stylesheet">
+  <!-- Include Materialize JavaScript -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+</head>
+<body onload="populateDropdowns()">
+
+  <div class="container">
+    <h5>Delete Counterparty</h5>
+    
     <!-- Filters -->
-    <div>
-      <label for="accountFilter">Account Name:</label>
-      <select id="accountFilter"></select>
-      
-      <label for="counterpartyFilter">Counterparty Name:</label>
-      <select id="counterpartyFilter"></select>
-      
-      <button onclick="searchCounterparties()">Search</button>
+    <div class="row">
+      <div class="input-field col s6">
+        <select id="accountFilter">
+          <option value="" disabled selected>Choose Account</option>
+        </select>
+        <label>Account Name</label>
+      </div>
+      <div class="input-field col s6">
+        <select id="counterpartyFilter">
+          <option value="" disabled selected>Choose Counterparty</option>
+        </select>
+        <label>Counterparty Name</label>
+      </div>
     </div>
-
+    
+    <!-- Search Button -->
+    <button class="btn waves-effect waves-light" onclick="searchCounterparties()">Search</button>
+    
     <!-- Table -->
-    <table id="counterpartyTable">
-      <thead>
-        <tr>
-          <th>Select</th>
-          <th>Account Name</th>
-          <th>Counterparty Name</th>
-          <th>Counterparty ID</th>
-        </tr>
-      </thead>
-      <tbody>
-        <!-- Rows will be populated dynamically -->
-      </tbody>
-    </table>
-
-    <!-- Footer with Delete Button -->
-    <div>
-      <button onclick="deleteSelectedCounterparties()">Delete</button>
+    <div id="counterpartyTable" class="section">
+      <!-- Table will be populated dynamically -->
     </div>
+    
+    <!-- Delete Button -->
+    <button class="btn red waves-effect waves-light" onclick="deleteSelectedCounterparties()">Delete</button>
+  </div>
 
-    <script>
-      // Function to populate filters from spreadsheet data
-      function populateFilters(accounts, counterparties) {
-        const accountFilter = document.getElementById('accountFilter');
-        const counterpartyFilter = document.getElementById('counterpartyFilter');
+  <script>
+    // Populate dropdowns with account and counterparty names
+    function populateDropdowns() {
+      google.script.run.withSuccessHandler(function(data) {
+        const accountSelect = document.getElementById('accountFilter');
+        const counterpartySelect = document.getElementById('counterpartyFilter');
 
-        accounts.forEach(account => {
+        data.accounts.forEach(account => {
           const option = document.createElement('option');
           option.value = account;
           option.text = account;
-          accountFilter.add(option);
+          accountSelect.appendChild(option);
         });
 
-        counterparties.forEach(counterparty => {
+        data.counterparties.forEach(counterparty => {
           const option = document.createElement('option');
           option.value = counterparty;
           option.text = counterparty;
-          counterpartyFilter.add(option);
+          counterpartySelect.appendChild(option);
         });
-      }
 
-      // Function to populate the table with filtered data
-      function populateTable(counterparties) {
-        const tableBody = document.getElementById('counterpartyTable').querySelector('tbody');
-        tableBody.innerHTML = '';  // Clear previous table rows
+        M.FormSelect.init(accountSelect);
+        M.FormSelect.init(counterpartySelect);
+      }).getDropdownData();
+    }
 
-        counterparties.forEach(row => {
-          const tr = document.createElement('tr');
-          
-          // Tick box column
-          const tdCheckbox = document.createElement('td');
-          const checkbox = document.createElement('input');
-          checkbox.type = 'checkbox';
-          checkbox.value = row.counterparty_id;
-          tdCheckbox.appendChild(checkbox);
-          tr.appendChild(tdCheckbox);
-          
-          // Account name column
-          const tdAccount = document.createElement('td');
-          tdAccount.textContent = row.account_name;
-          tr.appendChild(tdAccount);
-          
-          // Counterparty name column
-          const tdCounterparty = document.createElement('td');
-          tdCounterparty.textContent = row.counterparty_name;
-          tr.appendChild(tdCounterparty);
-          
-          // Counterparty ID column
-          const tdId = document.createElement('td');
-          tdId.textContent = row.counterparty_id;
-          tr.appendChild(tdId);
-          
-          tableBody.appendChild(tr);
-        });
-      }
+    // Search counterparties based on selected filters
+    function searchCounterparties() {
+      const accountName = document.getElementById('accountFilter').value;
+      const counterpartyName = document.getElementById('counterpartyFilter').value;
+      
+      google.script.run.withSuccessHandler(function(data) {
+        const tableDiv = document.getElementById('counterpartyTable');
+        tableDiv.innerHTML = '';  // Clear previous table
 
-      // Fetch filtered counterparties based on selected filters
-      function searchCounterparties() {
-        const account = document.getElementById('accountFilter').value;
-        const counterparty = document.getElementById('counterpartyFilter').value;
-        
-        google.script.run.withSuccessHandler(populateTable).getFilteredCounterparties(account, counterparty);
-      }
+        if (data.length > 0) {
+          const table = document.createElement('table');
+          table.className = 'striped';
+          
+          const thead = document.createElement('thead');
+          const headerRow = document.createElement('tr');
+          ['Select', 'Account Name', 'Counterparty Name'].forEach(header => {
+            const th = document.createElement('th');
+            th.innerText = header;
+            headerRow.appendChild(th);
+          });
+          thead.appendChild(headerRow);
+          table.appendChild(thead);
 
-      // Delete selected counterparties by calling the server-side delete function
-      function deleteSelectedCounterparties() {
-        const selectedIds = Array.from(document.querySelectorAll('#counterpartyTable tbody input[type="checkbox"]:checked'))
-                                 .map(cb => cb.value);
-        
-        if (selectedIds.length > 0) {
-          google.script.run.deleteCounterparties(selectedIds);
-          alert('Selected counterparties deleted.');
-          searchCounterparties(); // Refresh the table after deletion
+          const tbody = document.createElement('tbody');
+          data.forEach(row => {
+            const tr = document.createElement('tr');
+
+            const tdCheckbox = document.createElement('td');
+            const checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.className = 'filled-in';
+            checkbox.value = row.counterparty_id;
+            tdCheckbox.appendChild(checkbox);
+            tr.appendChild(tdCheckbox);
+
+            const tdAccount = document.createElement('td');
+            tdAccount.innerText = row.account_name;
+            tr.appendChild(tdAccount);
+
+            const tdCounterparty = document.createElement('td');
+            tdCounterparty.innerText = row.counterparty_name;
+            tr.appendChild(tdCounterparty);
+
+            tbody.appendChild(tr);
+          });
+          table.appendChild(tbody);
+          tableDiv.appendChild(table);
         } else {
-          alert('No counterparties selected.');
+          tableDiv.innerHTML = '<p>No counterparties found.</p>';
         }
+      }).getFilteredCounterparties(accountName, counterpartyName);
+    }
+
+    // Delete selected counterparties
+    function deleteSelectedCounterparties() {
+      const checkboxes = document.querySelectorAll('#counterpartyTable input[type="checkbox"]:checked');
+      const idsToDelete = Array.from(checkboxes).map(cb => cb.value);
+
+      if (idsToDelete.length > 0) {
+        google.script.run.withSuccessHandler(function() {
+          M.toast({html: 'Selected counterparties deleted successfully!'});
+          searchCounterparties(); // Refresh the table
+        }).deleteCounterparties(idsToDelete);
+      } else {
+        M.toast({html: 'Please select at least one counterparty to delete.'});
       }
-    </script>
-  </body>
+    }
+  </script>
+
+</body>
 </html>

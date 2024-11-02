@@ -6,27 +6,30 @@ function openDeleteCounterpartySidebar() {
   SpreadsheetApp.getUi().showModalDialog(html, 'Delete Counterparty');
 }
 
-// Retrieve account names and counterparty names for filters
-function getCounterpartyFilters() {
+// Fetch unique account and counterparty names for dropdown filters
+function getDropdownData() {
   const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('API - Counterparties');
-  const accountNames = [...new Set(sheet.getRange("A2:A").getValues().flat())];
-  const counterpartyNames = [...new Set(sheet.getRange("G2:G").getValues().flat())];
-  
-  return { accountNames, counterpartyNames };
+  const accountNames = [...new Set(sheet.getRange("A2:A").getValues().flat())].filter(name => name);
+  const counterpartyNames = [...new Set(sheet.getRange("G2:G").getValues().flat())].filter(name => name);
+
+  return {
+    accounts: accountNames,
+    counterparties: counterpartyNames
+  };
 }
 
-// Retrieve filtered counterparties
-function getFilteredCounterparties(account, counterparty) {
+// Retrieve counterparties based on selected account and counterparty filters
+function getFilteredCounterparties(accountName, counterpartyName) {
   const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('API - Counterparties');
-  const data = sheet.getDataRange().getValues().slice(1); // Skip header row
-  
+  const data = sheet.getDataRange().getValues().slice(1); // Exclude header row
+
   const filteredData = data.filter(row => 
-    (account ? row[0] === account : true) &&
-    (counterparty ? row[6] === counterparty : true)
+    (accountName ? row[0] === accountName : true) &&
+    (counterpartyName ? row[6] === counterpartyName : true)
   ).map(row => ({
-    counterparty_id: row[1], // Assuming ID is in column B
-    account_name: row[0], // Assuming account name is in column A
-    counterparty_name: row[6] // Assuming counterparty name is in column G
+    counterparty_id: row[1],  // Assuming counterparty ID is in column B
+    account_name: row[0],     // Account name in column A
+    counterparty_name: row[6] // Counterparty name in column G
   }));
 
   return filteredData;
@@ -34,7 +37,8 @@ function getFilteredCounterparties(account, counterparty) {
 
 // Delete selected counterparties using Revolut API
 function deleteCounterparties(counterpartyIds) {
-  const token = 'YOUR_AUTH_TOKEN'; // Replace with your actual token
+  const token = getAuthToken();  // Replace with actual token retrieval method
+
   counterpartyIds.forEach(id => {
     const url = `https://b2b.revolut.com/api/1.0/counterparty/${id}`;
     const options = {
