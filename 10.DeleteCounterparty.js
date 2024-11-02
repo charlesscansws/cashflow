@@ -9,28 +9,55 @@ function openDeleteCounterpartySidebar() {
 // Fetch unique account and counterparty names for dropdown filters
 function getDropdownData() {
   const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('API - Counterparties');
-  const accountNames = [...new Set(sheet.getRange("B2:B").getValues().flat())].filter(name => name);
-  const counterpartyNames = [...new Set(sheet.getRange("E2:E").getValues().flat())].filter(name => name);
+  
+  // Get account names and IDs from columns B and C and ensure uniqueness by name
+  const accountData = sheet.getRange("B2:C" + sheet.getLastRow()).getValues();
+  const uniqueAccounts = {};
+  accountData.forEach(row => {
+    const [accountName, accountId] = row;
+    if (accountName && accountId && !uniqueAccounts[accountName]) {
+      uniqueAccounts[accountName] = { accountName, accountId };
+    }
+  });
+  const accounts = Object.values(uniqueAccounts);
+
+  // Get counterparty names and IDs from columns C and E and ensure uniqueness by name
+  const counterpartyData = sheet.getRange("C2:E" + sheet.getLastRow()).getValues();
+  const uniqueCounterparties = {};
+  counterpartyData.forEach(row => {
+    const [counterpartyId, , counterpartyName] = row;
+    if (counterpartyName && counterpartyId && !uniqueCounterparties[counterpartyName]) {
+      uniqueCounterparties[counterpartyName] = { counterpartyName, counterpartyId };
+    }
+  });
+  const counterparties = Object.values(uniqueCounterparties);
 
   return {
-    accounts: accountNames,
-    counterparties: counterpartyNames
+    accounts,
+    counterparties
   };
 }
 
 // Retrieve counterparties based on selected account and counterparty filters
 function getFilteredCounterparties(accountName, counterpartyName) {
   const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('API - Counterparties');
-  const data = sheet.getDataRange().getValues().slice(1); // Exclude header row
+  const data = sheet.getDataRange().getValues(); // Fetch all data from the sheet
+  const headers = data[0]; // Assuming first row is headers
+  const accountNameIndex = headers.indexOf("accountName");
+  const counterpartyNameIndex = headers.indexOf("counterpartyName");
+  const counterpartyIdIndex = headers.indexOf("counterparty_id");
 
-  const filteredData = data.filter(row => 
-    (accountName ? row[0] === accountName : true) &&
-    (counterpartyName ? row[6] === counterpartyName : true)
-  ).map(row => ({
-    counterparty_id: row[1],  // Assuming counterparty ID is in column B
-    account_name: row[0],     // Account name in column A
-    counterparty_name: row[6] // Counterparty name in column G
-  }));
+  const filteredData = data.slice(1) // Remove header row
+    .filter(row => {
+      const matchesAccount = accountName ? row[accountNameIndex] === accountName : true;
+      const matchesCounterparty = counterpartyName ? row[counterpartyNameIndex] === counterpartyName : true;
+      return matchesAccount && matchesCounterparty;
+    })
+    .map(row => ({
+      accountName: row[accountNameIndex],
+      counterpartyName: row[counterpartyNameIndex],
+      counterpartyId: row[counterpartyIdIndex]
+    }));
 
   return filteredData;
 }

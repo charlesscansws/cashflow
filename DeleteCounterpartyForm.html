@@ -68,27 +68,31 @@
         const accountSelect = document.getElementById('accountFilter');
         const counterpartySelect = document.getElementById('counterpartyFilter');
 
-        // Populate Account Name dropdown with data from 'API - Counterparties'!B2:B
+        // Clear existing options to prevent duplicates
+        accountSelect.innerHTML = '<option value="" disabled selected>Choose Account</option>';
+        counterpartySelect.innerHTML = '<option value="" disabled selected>Choose Counterparty (Optional)</option>';
+
+        // Populate Account Name dropdown with unique account names and IDs
         data.accounts.forEach(account => {
           const option = document.createElement('option');
-          option.value = account.accountId;  // Use account id for value
-          option.text = account.accountName; // Display account name
+          option.value = account.accountId;  // Use accountId as the value
+          option.text = account.accountName; // Display accountName in the dropdown
           accountSelect.appendChild(option);
         });
 
-        // Populate Counterparty Name dropdown with data from 'API - Counterparties'!E2:E
+        // Populate Counterparty Name dropdown with unique counterparty names and IDs
         data.counterparties.forEach(counterparty => {
           const option = document.createElement('option');
-          option.value = counterparty.counterpartyId;  // Use counterparty id for value
-          option.text = counterparty.counterpartyName;  // Display counterparty name
+          option.value = counterparty.counterpartyId;  // Use counterpartyId as the value
+          option.text = counterparty.counterpartyName;  // Display counterpartyName in the dropdown
           counterpartySelect.appendChild(option);
         });
 
+        // Initialize Materialize select elements
         M.FormSelect.init(accountSelect);
         M.FormSelect.init(counterpartySelect);
       }).getDropdownData();
     }
-
     // Display a message in the message box
     function showMessage(text, type) {
       const messageBox = document.getElementById('messageBox');
@@ -98,58 +102,60 @@
     }
 
     // Search counterparties based on selected filters
-    function searchCounterparties() {
-      const accountId = document.getElementById('accountFilter').value;
-      const counterpartyId = document.getElementById('counterpartyFilter').value;
+  function searchCounterparties() {
+    const accountName = document.getElementById('accountFilter').value;
+    const counterpartyName = document.getElementById('counterpartyFilter').value;
 
-      google.script.run.withSuccessHandler(function(data) {
-        const tableDiv = document.getElementById('counterpartyTable');
-        tableDiv.innerHTML = '';  // Clear previous table
+    google.script.run.withSuccessHandler(function(data) {
+      const tableDiv = document.getElementById('counterpartyTable');
+      tableDiv.innerHTML = '';  // Clear previous table content
 
-        if (data.length > 0) {
-          const table = document.createElement('table');
-          table.className = 'striped';
+      if (data.length > 0) {
+        const table = document.createElement('table');
+        table.className = 'striped';
 
-          const thead = document.createElement('thead');
-          const headerRow = document.createElement('tr');
-          ['Select', 'Account Name', 'Counterparty Name'].forEach(header => {
-            const th = document.createElement('th');
-            th.innerText = header;
-            headerRow.appendChild(th);
-          });
-          thead.appendChild(headerRow);
-          table.appendChild(thead);
+        const thead = document.createElement('thead');
+        const headerRow = document.createElement('tr');
+        ['Select', 'Account Name', 'Counterparty Name'].forEach(header => {
+          const th = document.createElement('th');
+          th.innerText = header;
+          headerRow.appendChild(th);
+        });
+        thead.appendChild(headerRow);
+        table.appendChild(thead);
 
-          const tbody = document.createElement('tbody');
-          data.forEach(row => {
-            const tr = document.createElement('tr');
+        const tbody = document.createElement('tbody');
+        data.forEach(row => {
+          const tr = document.createElement('tr');
 
-            const tdCheckbox = document.createElement('td');
-            const checkbox = document.createElement('input');
-            checkbox.type = 'checkbox';
-            checkbox.className = 'filled-in';
-            checkbox.value = row.counterparty_id;  // Set checkbox value to counterparty_id from column C
-            tdCheckbox.appendChild(checkbox);
-            tr.appendChild(tdCheckbox);
+          // Checkbox for selection
+          const tdCheckbox = document.createElement('td');
+          const checkbox = document.createElement('input');
+          checkbox.type = 'checkbox';
+          checkbox.className = 'filled-in';
+          checkbox.value = row.counterpartyId; // Use the counterpartyId for identification
+          tdCheckbox.appendChild(checkbox);
+          tr.appendChild(tdCheckbox);
 
-            const tdAccount = document.createElement('td');
-            tdAccount.innerText = row.account_name;
-            tr.appendChild(tdAccount);
+          // Account Name
+          const tdAccount = document.createElement('td');
+          tdAccount.innerText = row.accountName || ''; // Use account name from the data
+          tr.appendChild(tdAccount);
 
-            const tdCounterparty = document.createElement('td');
-            tdCounterparty.innerText = row.counterparty_name;  // Use counterparty name from column E
-            tr.appendChild(tdCounterparty);
+          // Counterparty Name
+          const tdCounterparty = document.createElement('td');
+          tdCounterparty.innerText = row.counterpartyName || ''; // Use counterparty name from the data
+          tr.appendChild(tdCounterparty);
 
-            tbody.appendChild(tr);
-          });
-          table.appendChild(tbody);
-          tableDiv.appendChild(table);
-        } else {
-          tableDiv.innerHTML = '<p>No counterparties found.</p>';
-        }
-      }).getFilteredCounterparties(accountId, counterpartyId);
-    }
-
+          tbody.appendChild(tr);
+        });
+        table.appendChild(tbody);
+        tableDiv.appendChild(table);
+      } else {
+        tableDiv.innerHTML = '<p>No counterparties found.</p>';
+      }
+    }).getFilteredCounterparties(accountName, counterpartyName);
+  }
     // Delete selected counterparties
     function deleteSelectedCounterparties() {
       const checkboxes = document.querySelectorAll('#counterpartyTable input[type="checkbox"]:checked');
