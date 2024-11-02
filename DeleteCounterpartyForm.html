@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+  </head>
+  <body>
+    <!-- Filters -->
+    <div>
+      <label for="accountFilter">Account Name:</label>
+      <select id="accountFilter"></select>
+      
+      <label for="counterpartyFilter">Counterparty Name:</label>
+      <select id="counterpartyFilter"></select>
+      
+      <button onclick="searchCounterparties()">Search</button>
+    </div>
+
+    <!-- Table -->
+    <table id="counterpartyTable">
+      <thead>
+        <tr>
+          <th>Select</th>
+          <th>Account Name</th>
+          <th>Counterparty Name</th>
+          <th>Counterparty ID</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- Rows will be populated dynamically -->
+      </tbody>
+    </table>
+
+    <!-- Footer with Delete Button -->
+    <div>
+      <button onclick="deleteSelectedCounterparties()">Delete</button>
+    </div>
+
+    <script>
+      // Function to populate filters from spreadsheet data
+      function populateFilters(accounts, counterparties) {
+        const accountFilter = document.getElementById('accountFilter');
+        const counterpartyFilter = document.getElementById('counterpartyFilter');
+
+        accounts.forEach(account => {
+          const option = document.createElement('option');
+          option.value = account;
+          option.text = account;
+          accountFilter.add(option);
+        });
+
+        counterparties.forEach(counterparty => {
+          const option = document.createElement('option');
+          option.value = counterparty;
+          option.text = counterparty;
+          counterpartyFilter.add(option);
+        });
+      }
+
+      // Function to populate the table with filtered data
+      function populateTable(counterparties) {
+        const tableBody = document.getElementById('counterpartyTable').querySelector('tbody');
+        tableBody.innerHTML = '';  // Clear previous table rows
+
+        counterparties.forEach(row => {
+          const tr = document.createElement('tr');
+          
+          // Tick box column
+          const tdCheckbox = document.createElement('td');
+          const checkbox = document.createElement('input');
+          checkbox.type = 'checkbox';
+          checkbox.value = row.counterparty_id;
+          tdCheckbox.appendChild(checkbox);
+          tr.appendChild(tdCheckbox);
+          
+          // Account name column
+          const tdAccount = document.createElement('td');
+          tdAccount.textContent = row.account_name;
+          tr.appendChild(tdAccount);
+          
+          // Counterparty name column
+          const tdCounterparty = document.createElement('td');
+          tdCounterparty.textContent = row.counterparty_name;
+          tr.appendChild(tdCounterparty);
+          
+          // Counterparty ID column
+          const tdId = document.createElement('td');
+          tdId.textContent = row.counterparty_id;
+          tr.appendChild(tdId);
+          
+          tableBody.appendChild(tr);
+        });
+      }
+
+      // Fetch filtered counterparties based on selected filters
+      function searchCounterparties() {
+        const account = document.getElementById('accountFilter').value;
+        const counterparty = document.getElementById('counterpartyFilter').value;
+        
+        google.script.run.withSuccessHandler(populateTable).getFilteredCounterparties(account, counterparty);
+      }
+
+      // Delete selected counterparties by calling the server-side delete function
+      function deleteSelectedCounterparties() {
+        const selectedIds = Array.from(document.querySelectorAll('#counterpartyTable tbody input[type="checkbox"]:checked'))
+                                 .map(cb => cb.value);
+        
+        if (selectedIds.length > 0) {
+          google.script.run.deleteCounterparties(selectedIds);
+          alert('Selected counterparties deleted.');
+          searchCounterparties(); // Refresh the table after deletion
+        } else {
+          alert('No counterparties selected.');
+        }
+      }
+    </script>
+  </body>
+</html>
