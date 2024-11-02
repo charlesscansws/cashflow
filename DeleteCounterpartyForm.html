@@ -2,9 +2,7 @@
 <html>
 <head>
   <base target="_top">
-  <!-- Include Bootstrap CSS -->
   <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.1.3/css/bootstrap.min.css" rel="stylesheet">
-  <!-- Include Bootstrap JavaScript -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.1.3/js/bootstrap.bundle.min.js"></script>
   <style>
     #messageBox {
@@ -23,7 +21,6 @@
   <div class="container">
     <h5>Delete Counterparty</h5>
     
-    <!-- Filters and Search Button -->
     <div class="row mb-3">
       <div class="col-md-5">
         <label for="accountFilter" class="form-label">Account Name</label>
@@ -42,25 +39,19 @@
       </div>
     </div>
 
-    <!-- Message Box -->
     <div id="messageBox"></div>
 
-    <!-- Table -->
-    <div id="counterpartyTable" class="section">
-      <!-- Table will be populated dynamically -->
-    </div>
+    <div id="counterpartyTable" class="section"></div>
     
-    <!-- Delete Button -->
     <button class="btn btn-danger mt-3" onclick="deleteSelectedCounterparties()">Delete</button>
   </div>
 
   <script>
     function populateDropdowns() {
-      google.script.run.withSuccessHandler(function(data) {
+      google.script.run.withSuccessHandler(data => {
         const accountSelect = document.getElementById('accountFilter');
         const counterpartySelect = document.getElementById('counterpartyFilter');
 
-        // Populate Account Name dropdown
         data.accounts.forEach(accountName => {
           const option = document.createElement('option');
           option.value = accountName;
@@ -68,7 +59,6 @@
           accountSelect.appendChild(option);
         });
 
-        // Populate Counterparty Name dropdown
         data.counterparties.forEach(counterpartyName => {
           const option = document.createElement('option');
           option.value = counterpartyName;
@@ -89,9 +79,9 @@
       const accountName = document.getElementById('accountFilter').value;
       const counterpartyName = document.getElementById('counterpartyFilter').value;
 
-      google.script.run.withSuccessHandler(function(data) {
+      google.script.run.withSuccessHandler(data => {
         const tableDiv = document.getElementById('counterpartyTable');
-        tableDiv.innerHTML = '';  // Clear previous table
+        tableDiv.innerHTML = '';
 
         if (data.length > 0) {
           const table = document.createElement('table');
@@ -118,8 +108,8 @@
             const checkbox = document.createElement('input');
             checkbox.type = 'checkbox';
             checkbox.className = 'form-check-input';
-            checkbox.value = row.counterpartyId; // Counterparty ID for deletion
-            checkboxDiv.appendChild(checkbox);
+            checkbox.value = row.counterpartyId;
+            checkbox.setAttribute('data-account-name', row.accountName); // Store account name in attribute
 
             tdCheckbox.appendChild(checkboxDiv);
             tr.appendChild(tdCheckbox);
@@ -148,16 +138,15 @@
 
       if (idsToDelete.length > 0) {
         showMessage('In progress...', 'success');
-
-        google.script.run.withSuccessHandler(function(response) {
+        google.script.run.withSuccessHandler(response => {
           if (response.success) {
             showMessage('Counterparties deleted successfully.', 'success');
-            searchCounterparties(); // Refresh the table
+            searchCounterparties();
           } else {
-            showMessage('Error: ' + response.error, 'error');
+            showMessage(`Error: ${response.error}`, 'error');
           }
-        }).withFailureHandler(function(error) {
-          showMessage('Error: ' + error.message, 'error');
+        }).withFailureHandler(error => {
+          showMessage(`Error: ${error.message}`, 'error');
         }).deleteCounterparties(idsToDelete);
       } else {
         showMessage('Please select at least one counterparty to delete.', 'error');

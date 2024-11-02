@@ -23,56 +23,23 @@ function getDropdownData() {
 // Retrieve counterparties based on selected account and counterparty filters
 function getFilteredCounterparties(accountName, counterpartyName) {
   const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('API - Counterparties');
-  const data = sheet.getDataRange().getValues();
-  
-  const filteredData = data.slice(1).filter(row => {
-    const matchesAccount = accountName ? row[1] === accountName : true;  // Column B for accountName
-    const matchesCounterparty = counterpartyName ? row[3] === counterpartyName : true;  // Column D for item.name
-    return matchesAccount && matchesCounterparty;
-  }).map(row => ({
-    checkbox: row[0],          // Checkbox from Column A
-    accountName: row[1],       // Account Name from Column B
-    counterpartyName: row[3],  // Counterparty Name from Column D
-    counterpartyId: row[2]     // Counterparty ID from Column C
-  }));
+  const dataRange = sheet.getDataRange();
+  const data = dataRange.getValues();
+
+  // Filter data based on selections
+  const filteredData = data
+    .filter(row => (accountName ? row[1] === accountName : true) &&
+                   (counterpartyName ? row[3] === counterpartyName : true))
+    .map(row => ({
+      counterpartyId: row[2],  // Assume this is the counterparty_id
+      accountName: row[1],
+      counterpartyName: row[3]
+    }));
 
   return filteredData;
 }
 
-// Delete selected counterparties using Revolut API
-function deleteCounterparties(idsToDelete) {
-  const token = getAuthToken(); // Function that retrieves the Bearer token from the tokens script
-  const baseUrl = 'https://b2b.revolut.com/api/1.0/counterparty/';
-
-  const responses = idsToDelete.map(id => {
-    const url = `${baseUrl}${id}`;
-    const options = {
-      method: 'delete',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      },
-      muteHttpExceptions: true
-    };
-    const response = UrlFetchApp.fetch(url, options);
-    const status = response.getResponseCode();
-
-    if (status === 204) { // 204 No Content indicates successful deletion
-      return { success: true, id };
-    } else {
-      const error = JSON.parse(response.getContentText()).message;
-      return { success: false, id, error };
-    }
-  });
-
-  const failed = responses.filter(res => !res.success);
-  return {
-    success: failed.length === 0,
-    error: failed.length > 0 ? failed.map(res => `Failed to delete ID ${res.id}: ${res.error}`).join(', ') : null
-  };
-}
-
-function XgetSelectedCounterpartiesForDeletion() {
+function getSelectedCounterpartiesForDeletion() {
   const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('API - Counterparties');
   if (!sheet) {
     Logger.log("Sheet 'API - Counterparties' not found");
@@ -91,4 +58,61 @@ function XgetSelectedCounterpartiesForDeletion() {
   }
   
   return idsToDelete;
+}
+// Delete selected counterparties using Revolut API
+
+function deleteSelectedCounterparties() {
+  const checkboxes = document.querySelectorAll('#counterpartyTable input[type="checkbox"]:checked');
+  const itemsToDelete = Array.from(checkboxes).map(cb => ({
+    counterpartyId: cb.value,
+    accountName: cb.getAttribute('data-account-name') // Retrieve account name
+  }));
+
+  if (itemsToDelete.length > 0) {
+    showMessage('In progress...', 'success');
+    
+    google.script.run.withSuccessHandler(function(response) {
+      if (response.success) {
+        showMessage('Counterparties deleted successfully.', 'success');
+        searchCounterparties(); // Refresh the table
+      } else {
+        showMessage('Error: ' + response.error, 'error');
+      }
+    }).withFailureHandler(function(error) {
+      showMessage('Error: ' + error.message, 'error');
+    }).deleteCounterparties(itemsToDelete); // Pass both counterpartyId and accountName
+  } else {
+    showMessage('Please select at least one counterparty to delete.', 'error');
+  }
+}
+
+function deleteCounterparties(items) {
+  items.forEach(item => {
+    const { counterpartyId, accountName } = item; // Destructure to get each id and account
+    const token = getAuthToken(accountName); // Fetch token based on account name
+
+    const url = `https://b2b.revolut.com/api/1.0/counterparty/${counterpartyId}`;
+    const options = {
+      method: 'delete',
+      headers: {
+        Authorization: `Bearer ${token}`
+      },
+      muteHttpExceptions: true
+    };
+
+    try {
+      const response = UrlFetchApp.fetch(url, options);
+      const statusCode = response.getResponseCode();
+      
+      if (statusCode === 200) {
+        Logger.log(`Counterparty ${counterpartyId} deleted successfully.`);
+      } else {
+        Logger.log(`Failed to delete counterparty ${counterpartyId}: ${response.getContentText()}`);
+      }
+    } catch (error) {
+      Logger.log(`Error deleting counterparty ${counterpartyId}: ${error}`);
+    }
+  });
+
+  return { success: true };
 }

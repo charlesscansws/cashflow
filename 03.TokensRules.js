@@ -5,39 +5,33 @@ let tokenExpiration = null;
 function getAuthToken(accountName) {
   const now = new Date();
 
-  // Check if we have a cached token and it’s still valid
   if (cachedToken && tokenExpiration && now < tokenExpiration) {
     return cachedToken;
   }
 
-  // Otherwise, refresh the token
   const newToken = refreshAuthToken(accountName);
   if (newToken) {
     cachedToken = newToken;
-    tokenExpiration = new Date(now.getTime() + 3600 * 1000); // Token valid for 1 hour
+    tokenExpiration = new Date(now.getTime() + 3600 * 1000);
     return cachedToken;
   } else {
     throw new Error('Failed to refresh token');
   }
 }
 
-// Refresh token using clientAssertion and current refreshToken
 function refreshAuthToken(accountName) {
   const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('API - Assets');
-  const range = sheet.getRange('B2:E'); // Adjust to match the actual range
-  const data = range.getValues();
+  const data = sheet.getRange('B2:E').getValues();
+  const accountRow = data.find(row => row[0] === accountName);
 
-  // Find the row with the account name
-  const row = data.find(row => row[0] === accountName);
-  if (!row) {
+  if (!accountRow) {
     throw new Error(`Account ${accountName} not found`);
   }
 
-  const clientAssertion = row[1];
-  const refreshToken = row[2];
+  const clientAssertion = accountRow[1];
+  const refreshToken = accountRow[2];
 
-  // Construct your refresh token request
-  const url = 'https://b2b.revolut.com/api/1.0/auth/token'; // Adjust URL if necessary
+  const url = 'https://b2b.revolut.com/api/1.0/auth/token';
   const options = {
     method: 'post',
     contentType: 'application/json',
@@ -50,25 +44,15 @@ function refreshAuthToken(accountName) {
   };
 
   const response = UrlFetchApp.fetch(url, options);
-  const status = response.getResponseCode();
-  if (status === 200) {
+  if (response.getResponseCode() === 200) {
     const json = JSON.parse(response.getContentText());
-    const newAccessToken = json.access_token;
-
-    // Update the sheet with the new token
-    sheet.getRange(rowIndex + 1, 5).setValue(json.refresh_token); // Column E for updated refresh token if needed
-    return newAccessToken;
+    sheet.getRange(accountRow[3], 5).setValue(json.refresh_token);
+    return json.access_token;
   } else {
     Logger.log(`Token refresh failed: ${response.getContentText()}`);
     return null;
   }
 }
-
-
-
-
-///////////
-
 
 // Check if token is expired (customize based on expiration criteria)
 function isTokenExpired(token) {
@@ -95,3 +79,5 @@ function saveAccountTokens(accountName, clientAssertion, refreshToken) {
   sheet.appendRow([accountName, clientAssertion, refreshToken]);
   return { success: true, accountId: sheet.getLastRow() };
 }
+
+
