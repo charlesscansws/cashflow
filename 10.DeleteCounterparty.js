@@ -1,8 +1,9 @@
 // Open the sidebar
 function openDeleteCounterpartySidebar() {
-  const html = HtmlService.createHtmlOutputFromFile('DeleteCounterpartyForm')
-      .setTitle('Delete Counterparty');
-  SpreadsheetApp.getUi().showSidebar(html);
+  var html = HtmlService.createHtmlOutputFromFile('DeleteCounterpartyForm')
+    .setWidth(800)
+    .setHeight(800);
+  SpreadsheetApp.getUi().showModalDialog(html, 'Delete Counterparty');
 }
 
 // Retrieve account names and counterparty names for filters
