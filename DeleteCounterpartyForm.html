@@ -152,10 +152,10 @@
         google.script.run.withSuccessHandler(function(response) {
           if (response.success) {
             showMessage('Counterparties deleted successfully.', 'success');
+            searchCounterparties(); // Refresh the table
           } else {
             showMessage('Error: ' + response.error, 'error');
           }
-          searchCounterparties(); // Refresh the table
         }).withFailureHandler(function(error) {
           showMessage('Error: ' + error.message, 'error');
         }).deleteCounterparties(idsToDelete);

@@ -41,18 +41,35 @@ function getFilteredCounterparties(accountName, counterpartyName) {
 
 // Delete selected counterparties using Revolut API
 function deleteCounterparties(idsToDelete) {
-  const url = 'https://b2b.revolut.com/api/1.0/counterparty/';
-  const token = 'YOUR_BEARER_TOKEN'; // Replace with actual token retrieval mechanism
+  const token = getAuthToken(); // Function that retrieves the Bearer token from the tokens script
+  const baseUrl = 'https://b2b.revolut.com/api/1.0/counterparty/';
 
-  idsToDelete.forEach(id => {
-    const response = UrlFetchApp.fetch(`${url}${id}`, {
-      method: 'DELETE',
-      headers: { 'Authorization': `Bearer ${token}` },
+  const responses = idsToDelete.map(id => {
+    const url = `${baseUrl}${id}`;
+    const options = {
+      method: 'delete',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
       muteHttpExceptions: true
-    });
-    
-    // Handle the response, log, or add additional error handling here if needed
+    };
+    const response = UrlFetchApp.fetch(url, options);
+    const status = response.getResponseCode();
+
+    if (status === 204) { // 204 No Content indicates successful deletion
+      return { success: true, id };
+    } else {
+      const error = JSON.parse(response.getContentText()).message;
+      return { success: false, id, error };
+    }
   });
+
+  const failed = responses.filter(res => !res.success);
+  return {
+    success: failed.length === 0,
+    error: failed.length > 0 ? failed.map(res => `Failed to delete ID ${res.id}: ${res.error}`).join(', ') : null
+  };
 }
 
 function XgetSelectedCounterpartiesForDeletion() {
