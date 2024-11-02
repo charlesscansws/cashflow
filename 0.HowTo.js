@@ -1,4 +1,5 @@
 /**
+ * 
  * When I mention "Make Changes Locally", I mean editing the code files on your own computer, specifically in the folder where you set up Clasp and Git (C:\Users\charl\OneDrive\Documents\GAS - REVOLUT).
 
 Since you’re using Clasp, any code changes you make in that local folder can be:
@@ -39,3 +40,5 @@ git add .
 git commit -m "Describe the changes you made"
 git push
  */
+
+
