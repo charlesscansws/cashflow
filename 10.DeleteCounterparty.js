@@ -1,9 +1,3 @@
-function onOpen() {
-  SpreadsheetApp.getUi().createMenu('Custom Menu')
-    .addItem('Delete Counterparty', 'openDeleteCounterpartySidebar')
-    .addToUi();
-}
-
 // Open the sidebar
 function openDeleteCounterpartySidebar() {
   const html = HtmlService.createHtmlOutputFromFile('DeleteCounterpartyForm')
