@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Bootstrap CSS CDN -->
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome for Icons -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <style>
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .account-title {
+            margin-top: 20px;
+            margin-bottom: 10px;
+        }
+
+        .form-container {
+            margin: 20px;
+        }
+
+        .account-row {
+            margin-bottom: 10px;
+        }
+
+        #messageContainer {
+            margin: 10px 0;
+        }
+
+        .alert {
+            margin-bottom: 10px;
+        }
+
+        /* Align buttons in a row */
+        .button-group {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+        }
+
+        /* Rounded square buttons */
+        .btn {
+            width: 40px; /* Set width and height to be equal */
+            height: 40px;
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+            border-radius: 50%; /* Rounded corners */
+            font-size: 16px; /* Adjust icon size */
+        }
+
+        .btn i {
+            line-height: 1; /* Ensures the icon is centered */
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container form-container">
+        <h2>Revolut Accounts Management</h2>
+        <div id="messageContainer"></div> <!-- Message Container for feedback -->
+
+        <!-- New Account Input Section -->
+        <div id="accountsContainer">
+            <div class="row account-row">
+                <div class="col-md-3">
+                    <div class="form-group">
+                        <label for="accountNameInput">Account Name</label>
+                        <input type="text" class="form-control account-name" placeholder="Enter Account Nickname" aria-label="Account Name">
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="form-group">
+                        <label for="clientAssertionInput">Client Assertion</label>
+                        <input type="text" class="form-control client-assertion" placeholder="Enter Client Assertion" aria-label="Client Assertion">
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="form-group">
+                        <label for="refreshTokenInput">Refresh Token</label>
+                        <input type="text" class="form-control refresh-token" placeholder="Enter Refresh Token" aria-label="Refresh Token">
+                    </div>
+                </div>
+                <div class="col-md-3 button-group">
+                    <button type="button" class="btn btn-success btn-sm save-account" data-toggle="tooltip" title="Save">
+                        <i class="fas fa-save"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Existing Accounts Section -->
+    <div class="container">
+        <h3>Existing Accounts</h3>
+        <div id="existingAccounts"></div>
+    </div>
+
+    <!-- Bootstrap JS CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+    <!-- Font Awesome JS CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/js/all.min.js"></script>
+
+    <script>
+        // Function to load existing accounts
+        function loadExistingAccounts() {
+            showMessage("Loading existing accounts...");
+            google.script.run.withSuccessHandler(displayExistingAccounts).getExistingAccounts();
+        }
+
+        // Function to display existing accounts
+        function displayExistingAccounts(data) {
+            showMessage("Existing accounts loaded successfully.", "success");
+            const container = document.getElementById('existingAccounts');
+            container.innerHTML = ''; // Clear previous data
+
+            data.forEach((row, index) => {
+                const accountDiv = document.createElement('div');
+                accountDiv.className = 'row account-row';
+                accountDiv.dataset.index = index;
+
+                accountDiv.innerHTML = `
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label>Account Name</label>
+                            <input type="text" class="form-control account-name" value="${row[0]}" aria-label="Account Name">
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label>Client Assertion</label>
+                            <input type="text" class="form-control client-assertion" value="${row[1]}" aria-label="Client Assertion">
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label>Refresh Token</label>
+                            <input type="text" class="form-control refresh-token" value="${row[2]}" aria-label="Refresh Token">
+                        </div>
+                    </div>
+                    <div class="col-md-3 button-group">
+                        <button type="button" class="btn btn-warning btn-sm update-account" data-toggle="tooltip" title="Update"><i class="fas fa-edit"></i></button>
+                        <button type="button" class="btn btn-danger btn-sm remove-account" data-toggle="tooltip" title="Remove"><i class="fas fa-trash-alt"></i></button>
+                    </div>
+                `;
+                container.appendChild(accountDiv);
+            });
+
+            // Add event listeners for existing account buttons
+            container.querySelectorAll('.remove-account').forEach(button => {
+                button.addEventListener('click', function () {
+                    const index = this.closest('.account-row').dataset.index;
+                    showMessage("Removing account...");
+                    google.script.run.withSuccessHandler(function () {
+                        showMessage("Account removed successfully.", "success");
+                        loadExistingAccounts(); // Reload accounts
+                    }).withFailureHandler(function (error) {
+                        showMessage("Error removing account: " + error.message, "danger");
+                    }).removeAccount(index);
+                });
+            });
+
+            container.querySelectorAll('.update-account').forEach(button => {
+                button.addEventListener('click', function () {
+                    const row = this.closest('.account-row');
+                    const index = row.dataset.index;
+                    const accountName = row.querySelector('.account-name').value;
+                    const clientAssertion = row.querySelector('.client-assertion').value;
+                    const refreshToken = row.querySelector('.refresh-token').value;
+
+                    if (!accountName || !clientAssertion || !refreshToken) {
+                        showMessage("Please fill in all fields.", "warning");
+                        return;
+                    }
+
+                    showMessage("Updating account...");
+                    google.script.run.withSuccessHandler(function (result) {
+                        if (result.success) {
+                            showMessage("Account updated successfully.", "success");
+                            loadExistingAccounts(); // Reload accounts
+                        } else {
+                            showMessage("Error: " + result.message, "danger");
+                        }
+                    }).withFailureHandler(function (error) {
+                        showMessage("Error updating account: " + error.message, "danger");
+                    }).updateAccount(index, accountName, clientAssertion, refreshToken);
+                });
+            });
+        }
+
+        // Event listener to load existing accounts when the document is ready
+        document.addEventListener('DOMContentLoaded', loadExistingAccounts);
+
+        // Event listener to save new account
+        document.querySelector('.save-account').addEventListener('click', () => {
+            const accountName = document.querySelector('.account-name').value;
+            const clientAssertion = document.querySelector('.client-assertion').value;
+            const refreshToken = document.querySelector('.refresh-token').value;
+
+            if (!accountName || !clientAssertion || !refreshToken) {
+                showMessage("Please fill in all fields.", "warning");
+                return;
+            }
+
+            showMessage("Saving new account...");
+            google.script.run.withSuccessHandler(function (result) {
+                if (result.success) {
+                    showMessage("Account saved successfully.", "success");
+                    loadExistingAccounts(); // Reload accounts
+                } else {
+                    showMessage("Error: " + result.message, "danger");
+                }
+            }).withFailureHandler(function (error) {
+                showMessage("Error saving account: " + error.message, "danger");
+            }).saveAccount(accountName, clientAssertion, refreshToken);
+        });
+
+        // Function to display messages
+        function showMessage(message, type = "info") {
+            var messageContainer = document.getElementById('messageContainer');
+            messageContainer.innerHTML = '<div class="alert alert-' + type + '">' + message + '</div>';
+
+            // Set a timeout to clear the message after 5 seconds
+            setTimeout(() => {
+                messageContainer.innerHTML = '';
+            }, 5000);
+        }
+    </script>
+</body>
+
+</html>

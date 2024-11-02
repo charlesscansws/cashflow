@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- Bootstrap CSS CDN -->
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet" />
+    <!-- Font Awesome CDN for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" />
+    <!-- Bootstrap JS CDN -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <style>
+        .btn-container {
+            margin-bottom: 8px;
+        }
+        .btn-container button {
+            margin-bottom: 8px;
+        }
+        .account-dropdown {
+            margin-top: 20px;
+        }
+        .account-dropdown p {
+            margin-bottom: 10px;
+        }
+        .account-dropdown .dropdown-wrapper {
+            display: flex;
+            align-items: center;
+        }
+        .account-dropdown select {
+            flex: 1;
+            margin-right: 10px;
+        }
+        .refresh-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+        }
+        .alert {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Dropdown for selecting account with refresh button -->
+    <div class="container account-dropdown">
+        <p class="mb-0">Select Account:</p>
+        <div class="dropdown-wrapper">
+            <select id="accountSelector" class="form-control" onchange="handleSelection()">
+                <option value="all">All</option>
+                <!-- Options will be populated dynamically -->
+            </select>
+            <button class="btn btn-outline-secondary refresh-btn" onclick="loadAccounts()">
+                <i class="fas fa-sync-alt"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- Message Display -->
+    <div id="messageContainer"></div>
+
+    <script>
+        // Function to load account names into the dropdown
+        function loadAccounts() {
+            google.script.run.withSuccessHandler(populateAccountDropdown).getAccountNamesOption();
+        }
+
+        // Function to populate the dropdown with account names
+        function populateAccountDropdown(accounts) {
+            const accountSelector = document.getElementById('accountSelector');
+            accountSelector.innerHTML = '<option value="all">All</option>'; // Add 'All' option
+
+            accounts.forEach((account) => {
+                if (typeof account === 'string' && account.trim() !== '') {
+                    const option = document.createElement('option');
+                    option.value = account;
+                    option.text = account;
+                    accountSelector.appendChild(option);
+                }
+            });
+        }
+
+        // Function to handle account selection
+        function handleSelection() {
+          const accountSelector = document.getElementById('accountSelector');
+          const selectedAccount = accountSelector.value;
+
+          if (selectedAccount === 'all') {
+              showMessage('All accounts selected.', 'info');
+              // Execute function for all accounts
+              google.script.run.withSuccessHandler(function () {
+                  showMessage('Function executed for all accounts.', 'success');
+              }).withFailureHandler(function (error) {
+                  showMessage('Error: ' + error.message, 'danger');
+              }).executeForAllAccounts('desired_endpoint'); // Pass the correct endpoint
+          } else {
+              showMessage('Selected account: ' + selectedAccount, 'info');
+              // Execute function for the selected account
+              google.script.run.withSuccessHandler(function () {
+                  showMessage('Function executed for selected account: ' + selectedAccount, 'success');
+              }).withFailureHandler(function (error) {
+                  showMessage('Error: ' + error.message, 'danger');
+              }).executeForSelectedAccount('desired_endpoint', selectedAccount); // Pass both endpoint and account
+          }
+      }
+
+
+        // Function to display messages
+        function showMessage(message, type = 'info') {
+            const messageContainer = document.getElementById('messageContainer');
+            messageContainer.innerHTML = '<div class="alert alert-' + type + '">' + message + '</div>';
+
+            // Set a timeout to clear the message after 5 seconds
+            setTimeout(() => {
+                messageContainer.innerHTML = '';
+            }, 5000);
+        }
+
+        // Load accounts when the page is loaded
+        document.addEventListener('DOMContentLoaded', loadAccounts);
+    </script>
+
+    <!-- Payments Section -->
+    <div class="container btn-container">
+        <h3>Payments</h3>
+        <button class="btn btn-outline-primary btn-block" onclick="callSendPayments()">Send Payment(s)</button>
+        <button class="btn btn-outline-primary btn-block" onclick="callSchedulePayments()">Schedule Payment(s)</button>
+        <button class="btn btn-outline-primary btn-block" onclick="callDraftPayments()">Draft Payment(s)</button>
+        <button class="btn btn-outline-primary btn-block" onclick="callPaymentStatus()">Payment(s) Status</button>
+    </div>
+    <!-- Treasury Section -->
+    <div class="container btn-container">
+        <h3>Internal Treasury</h3>
+        <button class="btn btn-outline-primary btn-block" onclick="google.script.run.transferBetweenSubaccounts()">Move Money</button>
+    </div>
+    <!-- API Refresh Section -->
+    <div class="container btn-container">
+        <hr class="dashed" />
+        <h3>API Refresh</h3>
+        <button class="btn btn-outline-primary btn-block" onclick="callAPI('accounts')">Accounts</button>
+        <button class="btn btn-outline-primary btn-block" onclick="callAPI('transactions')">Transactions</button>
+        <!--<button class="btn btn-outline-primary btn-block" onclick="callAPI('cards')">Cards</button>-->
+    </div>
+    <!-- Counterparties Section -->
+    <div class="container btn-container">
+        <hr class="dashed" />
+        <h3>Counterparties</h3>
+        <button class="btn btn-outline-primary btn-block" onclick="callAPI('counterparties')">API Refresh</button>
+        <button class="btn btn-outline-primary btn-block" onclick= "google.script.run.showAddCounterpartyForm()">New</button>
+        <button class="btn btn-outline-primary btn-block" onclick= "google.script.run.showDeleteCounterpartyForm()">Delete</button>
+
+    </div>
+    <!-- API Refresh Section -->
+    <div class="container btn-container">
+        <hr class="dashed" />
+        <h3>New</h3>
+        <button class="btn btn-outline-primary btn-block" onclick="callAPI('transactions')">Transfers</button>
+    </div>
+    <!-- Settings Section -->
+    <div class="container btn-container">
+        <hr class="dashed" />
+        <h3>Settings</h3>
+        <button class="btn btn-outline-primary btn-block" onclick="google.script.run.showSetupDialog()">Set Up Sheets</button>
+        <button class="btn btn-outline-primary btn-block" onclick="google.script.run.showLogin()">Account(s) Login</button>
+        <button class="btn btn-outline-primary btn-block" onclick="google.script.run.showInfo()">Licence Mgt</button>
+    </div>
+
+    <script>
+        // Function to call API functions with the selected account
+        function callAPI(endpoint) {
+            const accountSelector = document.getElementById('accountSelector');
+            const selectedAccount = accountSelector.value;
+
+            if (selectedAccount === 'all') {
+                showMessage("Cannot execute API call for 'All'. Please select a specific account.", 'warning');
+                return;
+            }
+
+            google.script.run.withSuccessHandler(function () {
+                showMessage('Function executed for selected account: ' + selectedAccount, 'success');
+            }).withFailureHandler(function (error) {
+                showMessage('Error: ' + error.message, 'danger');
+            }).callRevolutAPI(endpoint, selectedAccount);
+        }
+    </script>
+
+  </body>
+</html>

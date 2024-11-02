@@ -1,7 +1,28 @@
 {
-  "timeZone": "America/New_York",
+  "timeZone": "Europe/Brussels",
   "dependencies": {
+    "enabledAdvancedServices": [{
+      "userSymbol": "Drive",
+      "serviceId": "drive",
+      "version": "v3"
+    }]
   },
   "exceptionLogging": "STACKDRIVER",
-  "runtimeVersion": "V8"
+  "oauthScopes": ["https://www.googleapis.com/auth/script.deployments", "https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/script.external_request", "https://www.googleapis.com/auth/script.container.ui"],
+  "urlFetchWhitelist": ["https://scans.ws/*", "https://scans-jlh5l.ondigitalocean.app/api/verify-license", "https://sandbox-b2b.revolut.com/api/1.0", "https://sandbox-b2b.revolut.com/api/1.0/accounts", "https://sandbox-b2b.revolut.com/api/1.0/transactions", "https://sandbox-b2b.revolut.com/api/1.0/counterparties", "https://sandbox-b2b.revolut.com/api/1.0/counterparty", "https://sandbox-b2b.revolut.com/api/1.0/auth/token", "https://b2b.revolut.com/api/1.0", "https://b2b.revolut.com/api/1.0/accounts", "https://b2b.revolut.com/api/1.0/transactions", "https://b2b.revolut.com/api/1.0/counterparties", "https://b2b.revolut.com/api/1.0/counterparty", "https://b2b.revolut.com/api/1.0/auth/token"],
+  "runtimeVersion": "V8",
+  "addOns": {
+    "common": {
+      "name": "File.Management Add-on",
+      "logoUrl": "https://example.com/logo.png",
+      "useLocaleFromApp": true,
+      "openLinkUrlPrefixes": ["https://www.scans.ws"]
+    },
+    "sheets": {
+      "homepageTrigger": {
+        "runFunction": "onSheetsHomePage",
+        "enabled": true
+      }
+    }
+  }
 }

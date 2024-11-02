@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <base target="_top">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+  <style>
+    /* Add custom styles here if needed */
+    body {
+      padding: 20px;
+    }
+
+    .table-container {
+      overflow-x: auto;
+    }
+
+    .button-container {
+      text-align: center;
+      margin-top: 20px;
+    }
+
+    .numeric-field {
+      width: 100%;
+      height: 40px;
+      padding: 5px;
+    }
+
+    .text-field {
+      width: 100%;
+      height: 40px;
+      padding: 5px;
+    }
+
+    .radio-button {
+      margin: 0;
+      vertical-align: middle;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="messageContainer"></div>
+  <form id="transferForm">
+    <div class="modal-header">
+      <div class="row">
+        <div class="col">
+          <select id="accountFilter" class="form-control" required>
+            <option value="">Select Source Account</option>
+          </select>
+        </div>
+        <div class="col">
+          <select id="currencyFilter" class="form-control" required>
+            <option value="">Select Currency</option>
+          </select>
+        </div>
+        <div class="col">
+          <input type="number" id="amount" class="numeric-field" placeholder="Amount" required>
+        </div>
+        <div class="col">
+          <input type="text" id="description" class="text-field" placeholder="Description" maxlength="57" required>
+        </div>
+      </div>
+      <div class="button-container">
+        <button type="button" class="btn btn-info" onclick="sendMoney()">Send Money</button>
+      </div>
+    </div>
+
+    <div class="row mb-3">
+      <div class="col" style="overflow-x: auto;">
+        <div class="table-container">
+          <table class="table" style="width: 100%;">
+            <thead>
+              <tr>
+                <th>Select</th>
+                <th>Account Name</th>
+                <th>Account ID</th>
+                <th>Balance</th>
+                <th>Currency</th>
+              </tr>
+            </thead>
+            <tbody id="accountTableBody">
+              <!-- Accounts will be populated here -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="col">
+        <div class="table-container">
+          <table class="table" style="width: 100%;">
+            <thead>
+              <tr>
+                <th>Select</th>
+                <th>Account Name</th>
+                <th>Account ID</th>
+                <th>Balance</th>
+                <th>Currency</th>
+              </tr>
+            </thead>
+            <tbody id="destinationTableBody">
+              <!-- Destination accounts will be populated here -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </form>
+
+  <script>
+    // Populate account options with unique account names and currencies
+    function populateAccounts() {
+      google.script.run.withSuccessHandler(function(data) {
+        const accountFilter = document.getElementById('accountFilter');
+        const currencyFilter = document.getElementById('currencyFilter');
+        const accountTableBody = document.getElementById('accountTableBody');
+        const destinationTableBody = document.getElementById('destinationTableBody');
+
+        // Use a Set to store unique account names and currencies
+        const uniqueAccountNames = new Set();
+        const uniqueCurrencies = new Set();
+
+        data.forEach(account => {
+          uniqueAccountNames.add(account.accountName);
+          uniqueCurrencies.add(account.currency);
+
+          const accountRow = `<tr data-account-name="${account.accountName}" data-currency="${account.currency}" data-balance="${account.balance}">
+            <td><input type="radio" name="sourceAccount" value="${account.accountId}" class="radio-button" required></td>
+            <td>${account.accountName}</td>
+            <td>${account.accountId}</td>
+            <td>${account.balance}</td>
+            <td>${account.currency}</td>
+          </tr>`;
+          accountTableBody.insertAdjacentHTML('beforeend', accountRow);
+
+          const destinationRow = `<tr data-account-name="${account.accountName}" data-currency="${account.currency}">
+            <td><input type="radio" name="destinationAccount" value="${account.accountId}" class="radio-button" required></td>
+            <td>${account.accountName}</td>
+            <td>${account.accountId}</td>
+            <td>${account.balance}</td>
+            <td>${account.currency}</td>
+          </tr>`;
+          destinationTableBody.insertAdjacentHTML('beforeend', destinationRow);
+        });
+
+        // Populate the account dropdown with unique account names
+        uniqueAccountNames.forEach(accountName => {
+          const option = document.createElement('option');
+          option.value = accountName;
+          option.textContent = accountName;
+          accountFilter.appendChild(option);
+        });
+
+        // Populate the currency dropdown with unique currencies
+        uniqueCurrencies.forEach(currency => {
+          const currencyOption = document.createElement('option');
+          currencyOption.value = currency;
+          currencyOption.textContent = currency;
+          currencyFilter.appendChild(currencyOption);
+        });
+
+        // Log the options to ensure they are populated
+        console.log('Currencies:', uniqueCurrencies);
+        console.log('Accounts:', uniqueAccountNames);
+
+        // Add event listeners for filtering
+        accountFilter.addEventListener('change', filterTables);
+        currencyFilter.addEventListener('change', filterTables);
+
+      }).getAccountData();
+    }
+
+    // Filter tables based on selected account name and currency
+    function filterTables() {
+      const accountFilterValue = document.getElementById('accountFilter').value;
+      const currencyFilterValue = document.getElementById('currencyFilter').value;
+
+      // Filter account table
+      const accountRows = document.querySelectorAll('#accountTableBody tr');
+      accountRows.forEach(row => {
+        const accountName = row.getAttribute('data-account-name');
+        const currency = row.getAttribute('data-currency');
+
+        if ((accountFilterValue === '' || accountName === accountFilterValue) &&
+          (currencyFilterValue === '' || currency === currencyFilterValue)) {
+          row.style.display = '';
+        } else {
+          row.style.display = 'none';
+        }
+      });
+
+      // Filter destination table
+      const destinationRows = document.querySelectorAll('#destinationTableBody tr');
+      destinationRows.forEach(row => {
+        const accountName = row.getAttribute('data-account-name');
+        const currency = row.getAttribute('data-currency');
+
+        if ((accountFilterValue === '' || accountName === accountFilterValue) &&
+          (currencyFilterValue === '' || currency === currencyFilterValue)) {
+          row.style.display = '';
+        } else {
+          row.style.display = 'none';
+        }
+      });
+    }
+
+    // Call this function onload
+    document.addEventListener('DOMContentLoaded', populateAccounts);
+
+    // Send money function with validation rules
+    function sendMoney() {
+      const sourceAccountRadio = document.querySelector('input[name="sourceAccount"]:checked');
+      const destinationAccountRadio = document.querySelector('input[name="destinationAccount"]:checked');
+      const amountInput = document.getElementById('amount');
+      const amount = parseFloat(amountInput.value);
+      const description = document.getElementById('description').value;
+      const messageContainer = document.getElementById('messageContainer');
+
+      // Clear previous messages
+      messageContainer.innerHTML = '';
+
+      // Check if a source and destination account is selected
+      if (!sourceAccountRadio || !destinationAccountRadio) {
+        showMessage('Please select both a source and a destination account.', 'danger');
+        return;
+      }
+
+      // **Ensure the amount field is not empty**
+      if (amountInput.value === "") {
+        showMessage('The amount is missing.', 'danger');
+        amountInput.focus();
+        return;
+      }
+
+      const sourceAccountId = sourceAccountRadio.value;
+      const destinationAccountId = destinationAccountRadio.value;
+      const sourceAccountName = sourceAccountRadio.closest('tr').getAttribute('data-account-name');
+      const destinationAccountName = destinationAccountRadio.closest('tr').getAttribute('data-account-name');
+      const sourceAccountBalance = parseFloat(sourceAccountRadio.closest('tr').getAttribute('data-balance'));
+      const sourceAccountCurrency = sourceAccountRadio.closest('tr').getAttribute('data-currency');
+
+      // Ensure source and destination account names are the same
+      if (sourceAccountName !== destinationAccountName) {
+        showMessage('The source and destination accounts must have the same account name.', 'danger');
+        return;
+      }
+
+      // Ensure the amount is greater than 0
+      if (amount <= 0) {
+        showMessage('The amount must be greater than 0.', 'danger');
+        return;
+      }
+
+      // Ensure the amount does not exceed the balance of the source account
+      if (amount > sourceAccountBalance) {
+        showMessage('The amount cannot exceed the balance of the source account.', 'danger');
+        return;
+      }
+
+      // Show sending in progress message
+      showMessage('Sending in progress...', 'info');
+
+      // Execute the money transfer using Google Apps Script
+      google.script.run
+        .withSuccessHandler(function(logMessages) {
+          logMessages.forEach(msg => showMessage(msg, 'success'));
+          refreshTable();
+        })
+        .withFailureHandler(function(error) {
+          showMessage('Error: ' + error.message, 'danger');
+          console.error('Error during transfer:', error); // Log error to console for debugging
+        })
+        .transferMoneyBetweenAccounts(sourceAccountName, sourceAccountId, destinationAccountId, amount, sourceAccountCurrency, description);
+    }
+
+    // Show message function
+    function showMessage(message, type) {
+      const messageContainer = document.getElementById('messageContainer');
+      messageContainer.innerHTML += `<div class="alert alert-${type}" role="alert">${message}</div>`;
+    }
+
+    // Refresh table function
+    function refreshTable() {
+      document.getElementById('accountFilter').value = '';
+      document.getElementById('currencyFilter').value = '';
+      document.getElementById('amount').value = '';
+      document.getElementById('description').value = '';
+      populateAccounts();
+    }
+  </script>
+</body>
+
+</html>
