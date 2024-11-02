@@ -71,16 +71,16 @@
         // Populate Account Name dropdown with data from 'API - Counterparties'!B2:B
         data.accounts.forEach(account => {
           const option = document.createElement('option');
-          option.value = account;
-          option.text = account;
+          option.value = account.accountId;  // Use account id for value
+          option.text = account.accountName; // Display account name
           accountSelect.appendChild(option);
         });
 
         // Populate Counterparty Name dropdown with data from 'API - Counterparties'!E2:E
         data.counterparties.forEach(counterparty => {
           const option = document.createElement('option');
-          option.value = counterparty.counterparty_id;  // counterparty_id as the value
-          option.text = counterparty.counterparty_name;  // counterparty_name as the display text
+          option.value = counterparty.counterpartyId;  // Use counterparty id for value
+          option.text = counterparty.counterpartyName;  // Display counterparty name
           counterpartySelect.appendChild(option);
         });
 
@@ -99,8 +99,8 @@
 
     // Search counterparties based on selected filters
     function searchCounterparties() {
-      const accountName = document.getElementById('accountFilter').value;
-      const counterpartyName = document.getElementById('counterpartyFilter').value;
+      const accountId = document.getElementById('accountFilter').value;
+      const counterpartyId = document.getElementById('counterpartyFilter').value;
 
       google.script.run.withSuccessHandler(function(data) {
         const tableDiv = document.getElementById('counterpartyTable');
@@ -147,7 +147,7 @@
         } else {
           tableDiv.innerHTML = '<p>No counterparties found.</p>';
         }
-      }).getFilteredCounterparties(accountName, counterpartyName);
+      }).getFilteredCounterparties(accountId, counterpartyId);
     }
 
     // Delete selected counterparties

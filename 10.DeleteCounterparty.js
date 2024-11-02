@@ -9,8 +9,8 @@ function openDeleteCounterpartySidebar() {
 // Fetch unique account and counterparty names for dropdown filters
 function getDropdownData() {
   const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('API - Counterparties');
-  const accountNames = [...new Set(sheet.getRange("A2:A").getValues().flat())].filter(name => name);
-  const counterpartyNames = [...new Set(sheet.getRange("G2:G").getValues().flat())].filter(name => name);
+  const accountNames = [...new Set(sheet.getRange("B2:B").getValues().flat())].filter(name => name);
+  const counterpartyNames = [...new Set(sheet.getRange("E2:E").getValues().flat())].filter(name => name);
 
   return {
     accounts: accountNames,
