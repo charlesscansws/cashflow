@@ -138,8 +138,8 @@ function callRevolutAPI(endpoint, accountName) {
           return item.accounts.map(account => [
               '', // Placeholder
               accountName,
-              //item.id || '',
-              account.id || '',
+              item.id || '',
+              //account.id || '',
               item.name || '',
               item.revtag || '',
               //item.state || '',

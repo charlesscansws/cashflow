@@ -25,12 +25,12 @@
     
     <!-- Filters and Search Button -->
     <div class="row mb-3">
-    <div class="col-md-5">
-      <label for="accountFilter" class="form-label">Account Name</label>
-      <select id="accountFilter" class="form-select" required>
-        <option value="" disabled selected>Choose Account</option>
-      </select>
-    </div>
+      <div class="col-md-5">
+        <label for="accountFilter" class="form-label">Account Name</label>
+        <select id="accountFilter" class="form-select">
+          <option value="" disabled selected>Choose Account</option>
+        </select>
+      </div>
       <div class="col-md-5">
         <label for="counterpartyFilter" class="form-label">Counterparty Name</label>
         <select id="counterpartyFilter" class="form-select">
@@ -99,7 +99,7 @@
 
           const thead = document.createElement('thead');
           const headerRow = document.createElement('tr');
-          ['Select', 'Account Name', 'Counterparty Name'].forEach(header => {
+          ['Select', 'Counterparty Name', 'Account No + Sort Code', 'IBAN'].forEach(header => {
             const th = document.createElement('th');
             th.innerText = header;
             headerRow.appendChild(th);
@@ -111,6 +111,7 @@
           data.forEach(row => {
             const tr = document.createElement('tr');
 
+            // Checkbox for selection
             const tdCheckbox = document.createElement('td');
             const checkboxDiv = document.createElement('div');
             checkboxDiv.className = 'form-check form-switch';
@@ -118,19 +119,26 @@
             const checkbox = document.createElement('input');
             checkbox.type = 'checkbox';
             checkbox.className = 'form-check-input';
-            checkbox.value = row.counterpartyId; // Counterparty ID for deletion
+            checkbox.value = row.counterpartyId;
             checkboxDiv.appendChild(checkbox);
 
             tdCheckbox.appendChild(checkboxDiv);
             tr.appendChild(tdCheckbox);
 
-            const tdAccount = document.createElement('td');
-            tdAccount.innerText = row.accountName;
-            tr.appendChild(tdAccount);
+            // Counterparty Name
+            const tdCounterpartyName = document.createElement('td');
+            tdCounterpartyName.innerText = row.counterpartyName;
+            tr.appendChild(tdCounterpartyName);
 
-            const tdCounterparty = document.createElement('td');
-            tdCounterparty.innerText = row.counterpartyName;
-            tr.appendChild(tdCounterparty);
+            // Account No + Sort Code
+            const tdAccountNoSortCode = document.createElement('td');
+            tdAccountNoSortCode.innerText = `${row.accountNo || ''} ${row.sortCode || ''}`.trim();
+            tr.appendChild(tdAccountNoSortCode);
+
+            // IBAN
+            const tdIBAN = document.createElement('td');
+            tdIBAN.innerText = row.iban || '';
+            tr.appendChild(tdIBAN);
 
             tbody.appendChild(tr);
           });
@@ -141,36 +149,32 @@
         }
       }).getFilteredCounterparties(accountName, counterpartyName);
     }
-        function deleteSelectedCounterparties() {
-          const accountName = document.getElementById('accountFilter').value;
-          if (!accountName) {
-            showMessage('Please select an account name.', 'error');
-            return;
-          }
 
-          const checkboxes = document.querySelectorAll('#counterpartyTable input[type="checkbox"]:checked');
-          const idsToDelete = Array.from(checkboxes).map(cb => cb.value);
+    function deleteSelectedCounterparties() {
+      const checkboxes = document.querySelectorAll('#counterpartyTable input[type="checkbox"]:checked');
+      const idsToDelete = Array.from(checkboxes).map(cb => cb.value);
 
-          if (idsToDelete.length > 0) {
-            showMessage('In progress...', 'success');
-            
-            // Pass accountName and idsToDelete to deleteCounterparties
-            google.script.run.withSuccessHandler(function(response) {
-              if (response.success) {
-                showMessage('Counterparties deleted successfully.', 'success');
-                searchCounterparties(); // Refresh the table
-              } else {
-                showMessage('Error: ' + response.error, 'error');
-              }
-            }).withFailureHandler(function(error) {
-              showMessage('Error: ' + error.message, 'error');
-            }).deleteCounterparties(accountName, idsToDelete);
-          } else {
-            showMessage('Please select at least one counterparty to delete.', 'error');
-          }
-        }
-      </script>
+      if (idsToDelete.length > 0) {
+        showMessage('In progress...', 'success');
 
+        google.script.run
+          .withSuccessHandler(function(response) {
+            if (response.success) {
+              showMessage('Counterparties deleted successfully.', 'success');
+              searchCounterparties(); // Refresh the table
+            } else {
+              showMessage('Error: ' + response.error, 'error');
+            }
+          })
+          .withFailureHandler(function(error) {
+            showMessage('Error: ' + error.message, 'error');
+          })
+          .deleteCounterparties(idsToDelete);  // Pass idsToDelete array correctly
+      } else {
+        showMessage('Please select at least one counterparty to delete.', 'error');
+      }
+    }
+  </script>
 
 </body>
 </html>

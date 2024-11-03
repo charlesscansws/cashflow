@@ -23,18 +23,19 @@ function getDropdownData() {
 // Retrieve counterparties based on selected account and counterparty filters
 function getFilteredCounterparties(accountName, counterpartyName) {
   const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('API - Counterparties');
-  const dataRange = sheet.getDataRange();
-  const data = dataRange.getValues();
+  const dataRange = sheet.getRange(2, 2, sheet.getLastRow() - 1, 8).getValues(); // Adjust column range as needed
 
-  // Filter data based on selections
-  const filteredData = data
-    .filter(row => (accountName ? row[1] === accountName : true) &&
-                   (counterpartyName ? row[3] === counterpartyName : true))
-    .map(row => ({
-      counterpartyId: row[2],  // Assume this is the counterparty_id
-      accountName: row[1],
-      counterpartyName: row[3]
-    }));
+  const filteredData = dataRange.filter(row => {
+    const matchesAccount = !accountName || row[0] === accountName;
+    const matchesCounterparty = !counterpartyName || row[2] === counterpartyName; // Column D now for counterparty name
+    return matchesAccount && matchesCounterparty;
+  }).map(row => ({
+    counterpartyId: row[1],             // Corrected to pull ID from column C
+    counterpartyName: row[2],           // Corrected to pull name from column D
+    accountNo: row[4],                  // Column F for account number
+    sortCode: row[5],                   // Column G for sort code
+    iban: row[6]                        // Column H for IBAN
+  }));
 
   return filteredData;
 }
@@ -62,38 +63,21 @@ function getSelectedCounterpartiesForDeletion() {
 }
 // Delete selected counterparties using Revolut API
 
-function deleteSelectedCounterparties() {
-  const accountName = document.getElementById('accountFilter').value;
-  if (!accountName) {
-    showMessage('Please select an account name.', 'error');
-    return;
+function deleteCounterparties(ids) {
+  if (!Array.isArray(ids) || ids.length === 0) {
+    throw new TypeError("Expected 'ids' to be an array of counterparty IDs.");
   }
 
-  const checkboxes = document.querySelectorAll('#counterpartyTable input[type="checkbox"]:checked');
-  const idsToDelete = Array.from(checkboxes).map(cb => cb.value);
-
-  if (idsToDelete.length > 0) {
-    showMessage('In progress...', 'success');
-
-    // Confirm that idsToDelete is an array before passing it
-    if (!Array.isArray(idsToDelete)) {
-      console.error("Error: idsToDelete is not an array.", idsToDelete);
-      return;
+  const results = ids.map(id => {
+    const response = callRevolutAPI(id); // Example call to delete each counterparty
+    if (response.status !== 204) {
+      console.log(`Failed to delete counterparty ${id}. Response Code: ${response.status}`);
+      return { id, success: false, error: response.statusText };
     }
+    return { id, success: true };
+  });
 
-    google.script.run.withSuccessHandler(function(response) {
-      if (response.success) {
-        showMessage('Counterparties deleted successfully.', 'success');
-        searchCounterparties(); // Refresh the table
-      } else {
-        showMessage('Error: ' + response.error, 'error');
-      }
-    }).withFailureHandler(function(error) {
-      showMessage('Error: ' + error.message, 'error');
-    }).deleteCounterparties(accountName, idsToDelete);
-  } else {
-    showMessage('Please select at least one counterparty to delete.', 'error');
-  }
+  return { success: results.every(r => r.success), results };
 }
 
 function deleteCounterparties(accountName, ids) {
@@ -124,11 +108,11 @@ function deleteCounterparties(accountName, ids) {
     try {
       const response = UrlFetchApp.fetch(url, options);
       const responseCode = response.getResponseCode();
-      const responseBody = response.getContentText();
 
-      if (responseCode === 200) {
+      if (responseCode === 204) {
         console.log(`Counterparty ${counterparty_id} deleted successfully.`);
       } else {
+        const responseBody = response.getContentText();
         console.error(`Failed to delete counterparty ${counterparty_id}. Response Code: ${responseCode}, Response Body: ${responseBody}`);
       }
     } catch (error) {
