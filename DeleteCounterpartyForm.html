@@ -4,17 +4,33 @@
   <base target="_top">
   <!-- Include Bootstrap CSS -->
   <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.1.3/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Include Bootstrap JavaScript -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.1.3/js/bootstrap.bundle.min.js"></script>
   <style>
     #messageBox {
       padding: 10px;
       margin-top: 15px;
       border-radius: 5px;
-      display: none;
       text-align: center;
     }
     .success { background-color: #d4edda; color: #155724; }
     .error { background-color: #f8d7da; color: #721c24; }
+    .table-container {
+      max-height: 400px;
+      overflow-y: auto;
+    }
+    .sticky-header {
+      position: sticky;
+      top: 0;
+      background-color: #ffffff;
+      z-index: 1;
+      border-bottom: 1px solid #ddd;
+      text-align: left;
+      padding-left: 80px; /* Move header left */
+    }
+    .table-header-left {
+      padding-right: 0px; /* Align left padding with table content */
+    }
   </style>
 </head>
 <body onload="populateDropdowns()">
@@ -45,8 +61,22 @@
     <div id="messageBox"></div>
 
     <!-- Table -->
-    <div id="counterpartyTable" class="section"></div>
-    
+    <div id="tableWrapper">
+      <table class="table table-striped">
+        <thead>
+          <tr class="sticky-header">
+            <th>Select</th>
+            <th>Counterparty<br>Name</th>
+            <th>Account No<br>Sort Code</th>
+            <th>IBAN</th>
+          </tr>
+        </thead>
+      </table>
+      <div id="counterpartyTable" class="table-container">
+        <!-- Table rows will be populated dynamically -->
+      </div>
+    </div>
+
     <!-- Delete Button -->
     <button class="btn btn-danger mt-3" onclick="deleteSelectedCounterparties()">Delete</button>
   </div>
@@ -57,7 +87,6 @@
         const accountSelect = document.getElementById('accountFilter');
         const counterpartySelect = document.getElementById('counterpartyFilter');
 
-        // Populate Account Name dropdown
         data.accounts.forEach(accountName => {
           const option = document.createElement('option');
           option.value = accountName;
@@ -65,7 +94,6 @@
           accountSelect.appendChild(option);
         });
 
-        // Populate Counterparty Name dropdown
         data.counterparties.forEach(counterpartyName => {
           const option = document.createElement('option');
           option.value = counterpartyName;
@@ -79,7 +107,6 @@
       const messageBox = document.getElementById('messageBox');
       messageBox.innerHTML = text;
       messageBox.className = type === 'success' ? 'alert alert-success' : 'alert alert-danger';
-      messageBox.style.display = 'block';
     }
 
     function searchCounterparties() {
@@ -90,21 +117,11 @@
         const tableDiv = document.getElementById('counterpartyTable');
         tableDiv.innerHTML = '';  // Clear previous table
 
+        const tableBody = document.createElement('table');
+        tableBody.className = 'table table-striped';
+        const tbody = document.createElement('tbody');
+
         if (data.length > 0) {
-          const table = document.createElement('table');
-          table.className = 'table table-striped';
-
-          const thead = document.createElement('thead');
-          const headerRow = document.createElement('tr');
-          ['Select', 'Counterparty Name', 'Account No + Sort Code', 'IBAN'].forEach(header => {
-            const th = document.createElement('th');
-            th.innerText = header;
-            headerRow.appendChild(th);
-          });
-          thead.appendChild(headerRow);
-          table.appendChild(thead);
-
-          const tbody = document.createElement('tbody');
           data.forEach(row => {
             const tr = document.createElement('tr');
 
@@ -115,56 +132,70 @@
             const checkbox = document.createElement('input');
             checkbox.type = 'checkbox';
             checkbox.className = 'form-check-input';
-            checkbox.value = row.counterpartyId; // Counterparty ID for deletion
+            checkbox.value = row.counterpartyId;
             checkboxDiv.appendChild(checkbox);
 
             tdCheckbox.appendChild(checkboxDiv);
             tr.appendChild(tdCheckbox);
 
+            // Counterparty Name
             const tdCounterpartyName = document.createElement('td');
             tdCounterpartyName.innerText = row.counterpartyName;
             tr.appendChild(tdCounterpartyName);
 
+            // Account No + Sort Code
             const tdAccountNoSortCode = document.createElement('td');
             tdAccountNoSortCode.innerText = `${row.accountNo || ''} ${row.sortCode || ''}`.trim();
             tr.appendChild(tdAccountNoSortCode);
 
+            // IBAN
             const tdIBAN = document.createElement('td');
             tdIBAN.innerText = row.iban || '';
             tr.appendChild(tdIBAN);
 
             tbody.appendChild(tr);
           });
-          table.appendChild(tbody);
-          tableDiv.appendChild(table);
         } else {
-          tableDiv.innerHTML = '<p>No counterparties found.</p>';
+          const tr = document.createElement('tr');
+          const td = document.createElement('td');
+          td.colSpan = 4;
+          td.innerText = 'No counterparties found.';
+          tr.appendChild(td);
+          tbody.appendChild(tr);
         }
+
+        tableBody.appendChild(tbody);
+        tableDiv.appendChild(tableBody);
       }).getFilteredCounterparties(accountName, counterpartyName);
     }
 
-      function deleteSelectedCounterparties() {
-        const checkboxes = document.querySelectorAll('#counterpartyTable input[type="checkbox"]:checked');
-        const idsToDelete = Array.from(checkboxes).map(cb => cb.value);
-        const accountName = document.getElementById('accountFilter').value;
+    function deleteSelectedCounterparties() {
+      const checkboxes = document.querySelectorAll('#counterpartyTable input[type="checkbox"]:checked');
+      const idsToDelete = Array.from(checkboxes).map(cb => cb.value);
+      const accountName = document.getElementById('accountFilter').value;
 
-        if (idsToDelete.length > 0) {
-          showMessage('In progress...', 'success');
+      if (idsToDelete.length > 0) {
+        showMessage('In progress...', 'success');
 
-          google.script.run.withSuccessHandler(function(response) {
+        google.script.run.withSuccessHandler(function(response) {
           if (response.success) {
-            showMessage('Counterparties deleted successfully.', 'success');
+            const deletedItems = response.results
+              .filter(result => result.success)
+              .map(result => `Counterparty ${result.id} deleted successfully.`)
+              .join('<br>');
+            
+            showMessage(deletedItems || 'Counterparties deleted successfully.', 'success');
             searchCounterparties(); // Refresh the table
           } else {
             showMessage('Error: ' + response.error, 'error');
           }
         }).withFailureHandler(function(error) {
           showMessage('Error: ' + error.message, 'error');
-        }).deleteCounterparties(accountName, idsToDelete);  // Ensure accountName is first, idsToDelete is second
-                } else {
-                  showMessage('Please select at least one counterparty to delete.', 'error');
-        }
+        }).deleteCounterparties(accountName, idsToDelete);
+      } else {
+        showMessage('Please select at least one counterparty to delete.', 'error');
       }
+    }
   </script>
 
 </body>
