@@ -152,17 +152,17 @@
           showMessage('In progress...', 'success');
 
           google.script.run.withSuccessHandler(function(response) {
-            if (response.success) {
-              showMessage('Counterparties deleted successfully.', 'success');
-              searchCounterparties(); // Refresh the table
-            } else {
-              showMessage('Error: ' + response.error, 'error');
-            }
-          }).withFailureHandler(function(error) {
-            showMessage('Error: ' + error.message, 'error');
-          }).deleteCounterparties(accountName, idsToDelete);  // Ensure accountName is first, idsToDelete is second
-        } else {
-          showMessage('Please select at least one counterparty to delete.', 'error');
+          if (response.success) {
+            showMessage('Counterparties deleted successfully.', 'success');
+            searchCounterparties(); // Refresh the table
+          } else {
+            showMessage('Error: ' + response.error, 'error');
+          }
+        }).withFailureHandler(function(error) {
+          showMessage('Error: ' + error.message, 'error');
+        }).deleteCounterparties(accountName, idsToDelete);  // Ensure accountName is first, idsToDelete is second
+                } else {
+                  showMessage('Please select at least one counterparty to delete.', 'error');
         }
       }
   </script>
