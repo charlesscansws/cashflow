@@ -138,8 +138,8 @@ function callRevolutAPI(endpoint, accountName) {
           return item.accounts.map(account => [
               '', // Placeholder
               accountName,
-              //item.id || '',
-              account.id || '',
+              item.id || '',
+              //account.id || '',
               item.name || '',
               item.revtag || '',
               //item.state || '',
@@ -161,8 +161,8 @@ function callRevolutAPI(endpoint, accountName) {
               [
                   '', // Placeholder
                   accountName,
-                  //item.id || '',
-                  '', // No account.id
+                  item.id || '',
+                  // No account.id
                   item.name || '',
                   item.revtag || '',
                   //item.state || '',
@@ -175,8 +175,8 @@ function callRevolutAPI(endpoint, accountName) {
                   '',
                   '',
                   '',
-                  '', // Empty column for address fields
                   '',
+                  '', // Empty column for address fields
                   '', // Extra column to match the 17 columns in the range
               ]
           ];

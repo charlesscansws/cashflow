@@ -58,19 +58,62 @@ function getSelectedCounterpartiesForDeletion() {
   }
   
   return idsToDelete;
+function deleteCounterparties(accountName, ids) {
+  if (!accountName) {
+    throw new Error('Account name is required for deletion.');
+  }
+
+  const token = getAuthToken(accountName);
+  if (!token) {
+    throw new Error(`Failed to retrieve token for account: ${accountName}`);
+  }
+
+  ids.forEach(counterparty_id => {
+    const url = `https://b2b.revolut.com/api/1.0/counterparty/${counterparty_id}`;
+    const options = {
+      method: "delete",
+      headers: {
+        "Authorization": `Bearer ${token}`
+      },
+      muteHttpExceptions: true
+    };
+
+    try {
+      const response = UrlFetchApp.fetch(url, options);
+      const responseCode = response.getResponseCode();
+
+      if (responseCode === 200) {
+        console.log(`Counterparty ${counterparty_id} deleted successfully.`);
+      } else {
+        console.error(`Failed to delete counterparty ${counterparty_id}. Response: ${response.getContentText()}`);
+      }
+    } catch (error) {
+      console.error(`Error deleting counterparty ${counterparty_id}: ${error.message}`);
+    }
+  });
+}
 }
 // Delete selected counterparties using Revolut API
 
 function deleteSelectedCounterparties() {
-  const checkboxes = document.querySelectorAll('#counterpartyTable input[type="checkbox"]:checked');
-  const itemsToDelete = Array.from(checkboxes).map(cb => ({
-    counterpartyId: cb.value,
-    accountName: cb.getAttribute('data-account-name') // Retrieve account name
-  }));
+  const accountName = document.getElementById('accountFilter').value;
+  if (!accountName) {
+    showMessage('Please select an account name.', 'error');
+    return;
+  }
 
-  if (itemsToDelete.length > 0) {
+  const checkboxes = document.querySelectorAll('#counterpartyTable input[type="checkbox"]:checked');
+  const idsToDelete = Array.from(checkboxes).map(cb => cb.value);
+
+  if (idsToDelete.length > 0) {
     showMessage('In progress...', 'success');
-    
+
+    // Confirm that idsToDelete is an array before passing it
+    if (!Array.isArray(idsToDelete)) {
+      console.error("Error: idsToDelete is not an array.", idsToDelete);
+      return;
+    }
+
     google.script.run.withSuccessHandler(function(response) {
       if (response.success) {
         showMessage('Counterparties deleted successfully.', 'success');
@@ -80,39 +123,50 @@ function deleteSelectedCounterparties() {
       }
     }).withFailureHandler(function(error) {
       showMessage('Error: ' + error.message, 'error');
-    }).deleteCounterparties(itemsToDelete); // Pass both counterpartyId and accountName
+    }).deleteCounterparties(accountName, idsToDelete);
   } else {
     showMessage('Please select at least one counterparty to delete.', 'error');
   }
 }
 
-function deleteCounterparties(items) {
-  items.forEach(item => {
-    const { counterpartyId, accountName } = item; // Destructure to get each id and account
-    const token = getAuthToken(accountName); // Fetch token based on account name
+function deleteCounterparties(accountName, ids) {
+  if (!Array.isArray(ids)) {
+    console.error("Error: 'ids' is not an array. Received:", ids);
+    throw new TypeError("Expected 'ids' to be an array of counterparty IDs.");
+  }
 
-    const url = `https://b2b.revolut.com/api/1.0/counterparty/${counterpartyId}`;
+  if (!accountName) {
+    throw new Error('Account name is required for deletion.');
+  }
+
+  const token = getAuthToken(accountName);
+  if (!token) {
+    throw new Error(`Failed to retrieve token for account: ${accountName}`);
+  }
+
+  ids.forEach(counterparty_id => {
+    const url = `https://b2b.revolut.com/api/1.0/counterparty/${counterparty_id}`;
     const options = {
-      method: 'delete',
+      method: "delete",
       headers: {
-        Authorization: `Bearer ${token}`
+        "Authorization": `Bearer ${token}`
       },
       muteHttpExceptions: true
     };
 
     try {
       const response = UrlFetchApp.fetch(url, options);
-      const statusCode = response.getResponseCode();
-      
-      if (statusCode === 200) {
-        Logger.log(`Counterparty ${counterpartyId} deleted successfully.`);
+      const responseCode = response.getResponseCode();
+
+      if (responseCode === 200) {
+        console.log(`Counterparty ${counterparty_id} deleted successfully.`);
       } else {
-        Logger.log(`Failed to delete counterparty ${counterpartyId}: ${response.getContentText()}`);
+        console.error(`Failed to delete counterparty ${counterparty_id}. Response: ${response.getContentText()}`);
       }
     } catch (error) {
-      Logger.log(`Error deleting counterparty ${counterpartyId}: ${error}`);
+      console.error(`Error deleting counterparty ${counterparty_id}: ${error.message}`);
     }
   });
-
-  return { success: true };
 }
+
+

@@ -25,12 +25,12 @@
     
     <!-- Filters and Search Button -->
     <div class="row mb-3">
-      <div class="col-md-5">
-        <label for="accountFilter" class="form-label">Account Name</label>
-        <select id="accountFilter" class="form-select">
-          <option value="" disabled selected>Choose Account</option>
-        </select>
-      </div>
+    <div class="col-md-5">
+      <label for="accountFilter" class="form-label">Account Name</label>
+      <select id="accountFilter" class="form-select" required>
+        <option value="" disabled selected>Choose Account</option>
+      </select>
+    </div>
       <div class="col-md-5">
         <label for="counterpartyFilter" class="form-label">Counterparty Name</label>
         <select id="counterpartyFilter" class="form-select">
@@ -141,29 +141,36 @@
         }
       }).getFilteredCounterparties(accountName, counterpartyName);
     }
-
-    function deleteSelectedCounterparties() {
-      const checkboxes = document.querySelectorAll('#counterpartyTable input[type="checkbox"]:checked');
-      const idsToDelete = Array.from(checkboxes).map(cb => cb.value);
-
-      if (idsToDelete.length > 0) {
-        showMessage('In progress...', 'success');
-
-        google.script.run.withSuccessHandler(function(response) {
-          if (response.success) {
-            showMessage('Counterparties deleted successfully.', 'success');
-          } else {
-            showMessage('Error: ' + response.error, 'error');
+        function deleteSelectedCounterparties() {
+          const accountName = document.getElementById('accountFilter').value;
+          if (!accountName) {
+            showMessage('Please select an account name.', 'error');
+            return;
           }
-          searchCounterparties(); // Refresh the table
-        }).withFailureHandler(function(error) {
-          showMessage('Error: ' + error.message, 'error');
-        }).deleteCounterparties(idsToDelete);
-      } else {
-        showMessage('Please select at least one counterparty to delete.', 'error');
-      }
-    }
-  </script>
+
+          const checkboxes = document.querySelectorAll('#counterpartyTable input[type="checkbox"]:checked');
+          const idsToDelete = Array.from(checkboxes).map(cb => cb.value);
+
+          if (idsToDelete.length > 0) {
+            showMessage('In progress...', 'success');
+            
+            // Pass accountName and idsToDelete to deleteCounterparties
+            google.script.run.withSuccessHandler(function(response) {
+              if (response.success) {
+                showMessage('Counterparties deleted successfully.', 'success');
+                searchCounterparties(); // Refresh the table
+              } else {
+                showMessage('Error: ' + response.error, 'error');
+              }
+            }).withFailureHandler(function(error) {
+              showMessage('Error: ' + error.message, 'error');
+            }).deleteCounterparties(accountName, idsToDelete);
+          } else {
+            showMessage('Please select at least one counterparty to delete.', 'error');
+          }
+        }
+      </script>
+
 
 </body>
 </html>
