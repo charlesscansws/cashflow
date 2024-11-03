@@ -58,40 +58,7 @@ function getSelectedCounterpartiesForDeletion() {
   }
   
   return idsToDelete;
-function deleteCounterparties(accountName, ids) {
-  if (!accountName) {
-    throw new Error('Account name is required for deletion.');
-  }
 
-  const token = getAuthToken(accountName);
-  if (!token) {
-    throw new Error(`Failed to retrieve token for account: ${accountName}`);
-  }
-
-  ids.forEach(counterparty_id => {
-    const url = `https://b2b.revolut.com/api/1.0/counterparty/${counterparty_id}`;
-    const options = {
-      method: "delete",
-      headers: {
-        "Authorization": `Bearer ${token}`
-      },
-      muteHttpExceptions: true
-    };
-
-    try {
-      const response = UrlFetchApp.fetch(url, options);
-      const responseCode = response.getResponseCode();
-
-      if (responseCode === 200) {
-        console.log(`Counterparty ${counterparty_id} deleted successfully.`);
-      } else {
-        console.error(`Failed to delete counterparty ${counterparty_id}. Response: ${response.getContentText()}`);
-      }
-    } catch (error) {
-      console.error(`Error deleting counterparty ${counterparty_id}: ${error.message}`);
-    }
-  });
-}
 }
 // Delete selected counterparties using Revolut API
 
@@ -157,16 +124,18 @@ function deleteCounterparties(accountName, ids) {
     try {
       const response = UrlFetchApp.fetch(url, options);
       const responseCode = response.getResponseCode();
+      const responseBody = response.getContentText();
 
       if (responseCode === 200) {
         console.log(`Counterparty ${counterparty_id} deleted successfully.`);
       } else {
-        console.error(`Failed to delete counterparty ${counterparty_id}. Response: ${response.getContentText()}`);
+        console.error(`Failed to delete counterparty ${counterparty_id}. Response Code: ${responseCode}, Response Body: ${responseBody}`);
       }
     } catch (error) {
       console.error(`Error deleting counterparty ${counterparty_id}: ${error.message}`);
     }
   });
 }
+
 
 
