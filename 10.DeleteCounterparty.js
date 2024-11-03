@@ -62,40 +62,21 @@ function getSelectedCounterpartiesForDeletion() {
 
 }
 // Delete selected counterparties using Revolut API
-
 function deleteCounterparties(ids) {
   if (!Array.isArray(ids) || ids.length === 0) {
-    throw new TypeError("Expected 'ids' to be an array of counterparty IDs.");
+    console.error("Error: 'ids' is not an array or is empty. Received:", ids);
+    throw new TypeError("Expected 'ids' to be a non-empty array of counterparty IDs.");
   }
 
-  const results = ids.map(id => {
-    const response = callRevolutAPI(id); // Example call to delete each counterparty
-    if (response.status !== 204) {
-      console.log(`Failed to delete counterparty ${id}. Response Code: ${response.status}`);
-      return { id, success: false, error: response.statusText };
-    }
-    return { id, success: true };
-  });
-
-  return { success: results.every(r => r.success), results };
-}
-
-function deleteCounterparties(accountName, ids) {
-  if (!Array.isArray(ids)) {
-    console.error("Error: 'ids' is not an array. Received:", ids);
-    throw new TypeError("Expected 'ids' to be an array of counterparty IDs.");
-  }
-
-  if (!accountName) {
-    throw new Error('Account name is required for deletion.');
-  }
+  // Fetch the account name associated with the token if needed
+  const accountName = 'YourAccountName'; // Replace with dynamic logic if necessary
 
   const token = getAuthToken(accountName);
   if (!token) {
     throw new Error(`Failed to retrieve token for account: ${accountName}`);
   }
 
-  ids.forEach(counterparty_id => {
+  const results = ids.map(counterparty_id => {
     const url = `https://b2b.revolut.com/api/1.0/counterparty/${counterparty_id}`;
     const options = {
       method: "delete",
@@ -111,15 +92,19 @@ function deleteCounterparties(accountName, ids) {
 
       if (responseCode === 204) {
         console.log(`Counterparty ${counterparty_id} deleted successfully.`);
+        return { id: counterparty_id, success: true };
       } else {
         const responseBody = response.getContentText();
         console.error(`Failed to delete counterparty ${counterparty_id}. Response Code: ${responseCode}, Response Body: ${responseBody}`);
+        return { id: counterparty_id, success: false, error: responseBody };
       }
     } catch (error) {
       console.error(`Error deleting counterparty ${counterparty_id}: ${error.message}`);
+      return { id: counterparty_id, success: false, error: error.message };
     }
   });
-}
 
+  return { success: results.every(r => r.success), results };
+}
 
 

@@ -149,7 +149,6 @@
         }
       }).getFilteredCounterparties(accountName, counterpartyName);
     }
-
     function deleteSelectedCounterparties() {
       const checkboxes = document.querySelectorAll('#counterpartyTable input[type="checkbox"]:checked');
       const idsToDelete = Array.from(checkboxes).map(cb => cb.value);
@@ -169,7 +168,7 @@
           .withFailureHandler(function(error) {
             showMessage('Error: ' + error.message, 'error');
           })
-          .deleteCounterparties(idsToDelete);  // Pass idsToDelete array correctly
+          .deleteCounterparties(idsToDelete);  // Pass idsToDelete array
       } else {
         showMessage('Please select at least one counterparty to delete.', 'error');
       }
