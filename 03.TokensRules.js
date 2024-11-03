@@ -58,8 +58,10 @@ function refreshAuthToken(accountName) {
   if (responseCode !== 200) throw new Error('Failed to refresh token: ' + (responseBody.error || 'unknown error'));
   return responseBody.access_token;
 }
+
 let cachedToken = null;
 let tokenExpiration = null;
+
 function getAuthToken(accountName) {
   const now = new Date();
   if (cachedToken && tokenExpiration && now < tokenExpiration) {

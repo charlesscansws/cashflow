@@ -62,7 +62,7 @@ function getSelectedCounterpartiesForDeletion() {
 
 }
 // Delete selected counterparties using Revolut API
-function deleteCounterparties(ids) {
+function XdeleteCounterparties(ids) {
   if (!Array.isArray(ids) || ids.length === 0) {
     console.error("Error: 'ids' is not an array or is empty. Received:", ids);
     throw new TypeError("Expected 'ids' to be a non-empty array of counterparty IDs.");
@@ -105,6 +105,46 @@ function deleteCounterparties(ids) {
   });
 
   return { success: results.every(r => r.success), results };
+}
+function deleteCounterparties(accountName, ids) {
+  if (!Array.isArray(ids) || ids.length === 0) {
+    console.error("Error: 'ids' is not an array or is empty. Received:", ids);
+    throw new TypeError("Expected 'ids' to be a non-empty array of counterparty IDs.");
+  }
+
+  if (!accountName) {
+    throw new Error('Account name is required for deletion.');
+  }
+
+  const token = getAuthToken(accountName);
+  if (!token) {
+    throw new Error(`Failed to retrieve token for account: ${accountName}`);
+  }
+
+  ids.forEach(counterparty_id => {
+    const url = `https://b2b.revolut.com/api/1.0/counterparty/${counterparty_id}`;
+    const options = {
+      method: "delete",
+      headers: {
+        "Authorization": `Bearer ${token}`
+      },
+      muteHttpExceptions: true
+    };
+
+    try {
+      const response = UrlFetchApp.fetch(url, options);
+      const responseCode = response.getResponseCode();
+
+      if (responseCode === 204) {
+        console.log(`Counterparty ${counterparty_id} deleted successfully.`);
+      } else {
+        const responseBody = response.getContentText();
+        console.error(`Failed to delete counterparty ${counterparty_id}. Response Code: ${responseCode}, Response Body: ${responseBody}`);
+      }
+    } catch (error) {
+      console.error(`Error deleting counterparty ${counterparty_id}: ${error.message}`);
+    }
+  });
 }
 
 
