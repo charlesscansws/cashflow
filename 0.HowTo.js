@@ -39,6 +39,13 @@ C:\Users\charl\OneDrive\Documents\GAS - REVOLUT>clasp push
 git add .
 git commit -m "Describe the changes you made"
 git push
+
+git add .
+git commit -m "add counterparty"
+git push
+
  */
+
+
 
 
