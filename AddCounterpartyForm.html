@@ -106,6 +106,14 @@
                         <label for="individual_bicInternational">BIC</label>
                         <input type="text" class="form-control" id="individual_bicInternational" required>
                     </div>
+                    <div class="form-group col-md-4">
+                        <label for="individual_cityInternational" class="required-field">City</label>
+                        <input type="text" class="form-control" id="individual_cityInternational" required>
+                    </div>
+                    <div class="form-group col-md-2">
+                        <label for="individual_postcodeInternational" class="required-field">Postcode</label>
+                        <input type="text" class="form-control" id="individual_postcodeInternational" required>
+                    </div>
                 </div>
                 <div id="ukFieldsIndividual" class="form-row hidden">
                     <div class="form-group col-md-6">
@@ -428,17 +436,18 @@
             bic: document.getElementById('individual_bicInternational').value
         };
 
+        // Adding address fields conditionally
         if (geo === 'EU' || geo === 'Non-EU') {
             data.address = {
-                city: document.getElementById('city').value || '',
-                street_line1: document.getElementById('street_line1').value || 'na', // Default "na"
+                city: document.getElementById('individual_cityInternational').value || '',
+                street_line1: document.getElementById('street_line1').value || 'na',
                 country: document.getElementById('country').value,
-                postcode: document.getElementById('postcode').value || ''
+                postcode: document.getElementById('individual_postcodeInternational').value || ''
             };
         }
 
         console.log("Data prepared for submission:", data);
-        sendDataToAPI(accountName, data, 'counterparty');
+        sendDataToAPI(accountName, data);
     }
 
 </script>
