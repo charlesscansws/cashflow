@@ -229,3 +229,53 @@ function callRevolutAPI(endpoint, accountName) {
   removeDuplicateRows(sheet, lastRow, numRows);
 }
 
+// Function to handle POST/UPDATE requests to the Revolut API
+function callRevolutAPIMethodPOST(endpoint, accountName, data) {
+  // Ensure we're using the correct endpoint for creating a counterparty
+  var url = 'https://b2b.revolut.com/api/1.0/' + endpoint;
+  Logger.log("Final URL: " + url);
+  
+  var tokens = getAccountTokens(accountName);
+
+  if (!tokens) {
+    throw new Error('No tokens found for account: ' + accountName);
+  }
+
+  var headers = {
+    'Authorization': 'Bearer ' + tokens.clientAssertion,
+    'Content-Type': 'application/json'
+  };
+
+  var options = {
+    'method': 'post', // POST for creating
+    'headers': headers,
+    'payload': JSON.stringify(data), // Convert the data object to a JSON string
+    'muteHttpExceptions': true // Allow handling of HTTP errors
+  };
+
+  var response = UrlFetchApp.fetch(url, options);
+  var responseCode = response.getResponseCode();
+
+  if (responseCode === 401) {
+    // Refresh the token and retry the request
+    var newClientAssertion = refreshAuthToken(accountName);
+    tokens.clientAssertion = newClientAssertion;
+    updateAccountTokens(accountName, newClientAssertion, tokens.refreshToken);
+
+    // Retry the request with the new token
+    headers['Authorization'] = 'Bearer ' + newClientAssertion;
+    options.headers = headers;
+    response = UrlFetchApp.fetch(url, options);
+  } else if (responseCode !== 200 && responseCode !== 201) {
+    // Log detailed error message if request fails
+    Logger.log('API call failed with response code: ' + responseCode);
+    Logger.log('Response message: ' + response.getContentText());
+    throw new Error('API call failed with response code: ' + responseCode);
+  }
+
+  // Log the response from the API
+  var responseBody = response.getContentText();
+  Logger.log("Response Body: " + responseBody);
+  
+  return JSON.parse(responseBody);
+}

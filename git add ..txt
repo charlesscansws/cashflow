@@ -1,3 +1,8 @@
+cd
+git add .
+git commit -m "Last Valid Version"
+git push
+
 git add .
 git commit -m "Token Refresh Rules"
 git push
@@ -15,4 +20,11 @@ git push
 'API - Assets'C2:C includes the clientAssertion
 'API - Assets'D2:D includes the refreshToken
 'API - Assets'E2:E includes the accountName
+
+git checkout <commit-hash> -- path/to/03.TokensRules.js
+git commit -m "Revert to previous working version of 03.TokensRules.js"
+
+case:
+git checkout e15b7c8 -- 03.TokensRules.js
+git commit -m "Revert to previous working version of 03.TokensRules.js"
 
