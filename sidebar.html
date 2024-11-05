@@ -129,7 +129,7 @@
     <!-- Payments Section -->
     <div class="container btn-container">
         <h3>Payments</h3>
-        <button class="btn btn-outline-primary btn-block" onclick="callSendPayments()">Send Payment(s)</button>
+        <button class="btn btn-outline-primary btn-block" onclick="callSendPayments()">New Payment(s)</button>
         <button class="btn btn-outline-primary btn-block" onclick="callSchedulePayments()">Schedule Payment(s)</button>
         <button class="btn btn-outline-primary btn-block" onclick="callDraftPayments()">Draft Payment(s)</button>
         <button class="btn btn-outline-primary btn-block" onclick="callPaymentStatus()">Payment(s) Status</button>
@@ -151,15 +151,9 @@
     <div class="container btn-container">
         <hr class="dashed" />
         <h3>Counterparties</h3>
-        <button class="btn btn-outline-primary btn-block" onclick="callAPI('counterparties')">API Refresh</button>
-        <button class="btn btn-outline-primary btn-block" onclick= "google.script.run.showAddCounterpartyForm()">New</button>
-        <button class="btn btn-outline-primary btn-block" onclick= "google.script.run.openDeleteCounterpartySidebar()">Delete</button>
-    </div>
-    <!-- API Refresh Section -->
-    <div class="container btn-container">
-        <hr class="dashed" />
-        <h3>New</h3>
-        <button class="btn btn-outline-primary btn-block" onclick="callAPI('transactions')">Transfers</button>
+        <button class="btn btn-outline-primary btn-block" onclick="callAPI('counterparties')">Import Revolut Cty</button>
+        <button class="btn btn-outline-primary btn-block" onclick= "google.script.run.showAddCounterpartyForm()">Create New Cty</button>
+        <button class="btn btn-outline-primary btn-block" onclick= "google.script.run.openDeleteCounterpartySidebar()">Delete Revolut Cty</button>
     </div>
     <!-- Settings Section -->
     <div class="container btn-container">

@@ -428,61 +428,74 @@
         }
     }
 
-    function showMessage(message, type) {
-        const messageContainer = document.getElementById('accountMessageContainer');
-        messageContainer.className = `alert alert-${type}`;
-        messageContainer.textContent = message;
-        messageContainer.style.display = 'block';
-    }
+          function showMessage(message, type) {
+              const messageContainer = document.getElementById('accountMessageContainer');
+              messageContainer.className = `alert alert-${type}`;
+              messageContainer.textContent = message;
+              messageContainer.style.display = 'block';
+          }
+          
 function submitIndividualAccountForm() {
     console.log("Submit button clicked - initiating submission process.");
     showMessage('Submitting individual account. Please wait...', 'info');
 
-    const accountName = document.getElementById('accountSelector').value;
+    const accountName = document.getElementById('accountSelector')?.value;
     if (!accountName || accountName === 'all') {
         showMessage('Please select a valid account.', 'danger');
         return;
     }
 
     const geo = getGeoRegion();
+    const countryElement = document.getElementById('country');
+    const currencyElement = document.getElementById('currency');
+
+    const country = countryElement ? countryElement.value : '';
+    const currency = currencyElement ? currencyElement.value : '';
     console.log("Detected region:", geo);
 
     // Base data structure
     let data = {
         individual_name: {
-            first_name: document.getElementById('first_name').value,
-            last_name: document.getElementById('last_name').value
+            first_name: document.getElementById('first_name')?.value || '',
+            last_name: document.getElementById('last_name')?.value || ''
         },
-        bank_country: document.getElementById('country').value,
-        currency: document.getElementById('currency').value,
-        country: document.getElementById('country').value // Root-level country
+        bank_country: country,
+        currency: currency,
+        country: country // Root-level country
     };
 
     // Add address and other fields based on region
     if (geo === 'EU') {
         data.address = {
-            city: document.getElementById('individual_cityInternational').value || '',
-            street_line1: document.getElementById('street_line1').value || 'na',
-            country: document.getElementById('country').value,
-            postcode: document.getElementById('individual_postcodeInternational').value || ''
+            city: document.getElementById('individual_cityInternational')?.value || '',
+            street_line1: document.getElementById('street_line1')?.value || 'na',
+            country: country,
+            postcode: document.getElementById('individual_postcodeInternational')?.value || ''
         };
+        data.iban = document.getElementById('individual_ibanInternational')?.value || '';
+        data.bic = document.getElementById('individual_bicInternational')?.value || '';
     } else if (geo === 'Non-EU') {
         data.address = {
-            city: document.getElementById('city').value || '',
-            street_line1: document.getElementById('street_line1').value || 'na',
-            country: document.getElementById('country').value,
-            postcode: document.getElementById('postcode').value || ''
+            city: document.getElementById('city')?.value || '',
+            street_line1: document.getElementById('street_line1')?.value || 'na',
+            country: country,
+            postcode: document.getElementById('postcode')?.value || ''
         };
-        data.iban = document.getElementById('individual_nonEU_iban').value || '';
-        data.bic = document.getElementById('individual_nonEU_bic').value || '';
+        data.iban = document.getElementById('individual_nonEU_iban')?.value || '';
+        data.bic = document.getElementById('individual_nonEU_bic')?.value || '';
     } else if (geo === 'UK') {
-        data.account_no = document.getElementById('account_no').value || '';
-        data.sort_code = document.getElementById('sort_code').value || '';
+        if (currency === 'GBP') {
+            data.account_no = document.getElementById('account_no')?.value || '';
+            data.sort_code = document.getElementById('sort_code')?.value || '';
+        } else {
+            data.iban = document.getElementById('uk_ibanInternational')?.value || '';
+            data.bic = document.getElementById('uk_bicInternational')?.value || '';
+        }
         data.address = {
-            city: document.getElementById('uk_city').value || '',
-            street_line1: document.getElementById('uk_street_line1').value || 'na',
-            country: document.getElementById('country').value,
-            postcode: document.getElementById('uk_postcode').value || ''
+            city: document.getElementById('uk_city')?.value || '',
+            street_line1: document.getElementById('uk_street_line1')?.value || 'na',
+            country: country,
+            postcode: document.getElementById('uk_postcode')?.value || ''
         };
     }
 
@@ -490,6 +503,7 @@ function submitIndividualAccountForm() {
     console.log("Data prepared for submission (before sending):", JSON.stringify(data));
     sendDataToAPI(accountName, data);
 }
+
 </script>
 
 <!-- Include Bootstrap JS and dependencies -->
