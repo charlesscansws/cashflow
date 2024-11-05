@@ -118,11 +118,11 @@
                 <div id="ukFieldsIndividual" class="form-row hidden">
                     <div class="form-group col-md-8">
                         <label for="uk_ibanInternational">IBAN</label>
-                        <input type="text" class="form-control" id="uk_ibanInternational" required>
+                        <input type="text" class="form-control" id="uk_ibanInternational" placeholder="required if account currency is not GBP">
                     </div>
                     <div class="form-group col-md-4">
                         <label for="uk_bicInternational">BIC</label>
-                        <input type="text" class="form-control" id="uk_bicInternational" required>
+                        <input type="text" class="form-control" id="uk_bicInternational" placeholder="required if account currency is not GBP">
                     </div>
                     <div class="form-group col-md-6">
                         <label for="account_no" class="required-field">Account Number</label>
@@ -396,7 +396,9 @@
 
     function handleBankCountryChange(type = 'individual') {
         const countryElement = document.getElementById(type === 'individual' ? 'country' : 'companyFormBankCountry');
+        const currencyElement = document.getElementById(type === 'individual' ? 'currency' : 'companyFormCurrency');
         const countryCode = countryElement ? countryElement.value : null;
+        const currencyCode = currencyElement ? currencyElement.value : null;
 
         if (countryCode) {
             const countryInfo = getISOCountryCodes().find(country => country.code === countryCode);
@@ -406,15 +408,19 @@
             const nonEUFields = document.getElementById(type === 'individual' ? 'nonEUFieldsIndividual' : 'nonEUFieldsCompany');
             const internationalFields = document.getElementById(type === 'individual' ? 'internationalFieldsIndividual' : 'internationalFieldsCompany');
 
+            // Rules for UK-specific display based on currency
             if (geoCategory === 'UK' && ukFields) {
+                // UK flow: Show UK-specific fields for account number and sort code
                 ukFields.classList.remove('hidden');
                 nonEUFields?.classList.add('hidden');
                 internationalFields?.classList.add('hidden');
             } else if (geoCategory === 'Non-EU' && nonEUFields) {
+                // Non-EU flow
                 ukFields?.classList.add('hidden');
                 nonEUFields.classList.remove('hidden');
                 internationalFields?.classList.add('hidden');
-            } else if (internationalFields) {
+            } else {
+                // Default to international if no specific rules apply
                 ukFields?.classList.add('hidden');
                 nonEUFields?.classList.add('hidden');
                 internationalFields.classList.remove('hidden');
