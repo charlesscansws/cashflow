@@ -230,7 +230,7 @@ function callRevolutAPI(endpoint, accountName) {
 }
 
 // Function to handle POST/UPDATE requests to the Revolut API
-function callRevolutAPIMethodPOST(endpoint, accountName, data) {
+function XcallRevolutAPIMethodPOST(endpoint, accountName, data) {
   // Ensure we're using the correct endpoint for creating a counterparty
   var url = 'https://b2b.revolut.com/api/1.0/' + endpoint;
   Logger.log("Final URL: " + url);
@@ -279,3 +279,51 @@ function callRevolutAPIMethodPOST(endpoint, accountName, data) {
   
   return JSON.parse(responseBody);
 }
+
+function callRevolutAPIMethodPOST(endpoint, accountName, data) {
+  var url = 'https://b2b.revolut.com/api/1.0/' + endpoint;
+  Logger.log("Final URL: " + url);
+
+  // Get the access token
+  var accessToken = counterparty_refreshAuthToken(accountName);
+
+  var headers = {
+    'Authorization': 'Bearer ' + accessToken,
+    'Content-Type': 'application/json'
+  };
+
+  var options = {
+    'method': 'post',
+    'headers': headers,
+    'payload': JSON.stringify(data),
+    'muteHttpExceptions': true
+  };
+
+  var response = UrlFetchApp.fetch(url, options);
+  var responseCode = response.getResponseCode();
+
+  if (responseCode === 401) {
+    // Token might have expired, refresh and retry
+    Logger.log('Access token expired, refreshing and retrying...');
+    accessToken = counterparty_refreshAuthToken(accountName);
+    headers['Authorization'] = 'Bearer ' + accessToken;
+    options.headers = headers;
+    response = UrlFetchApp.fetch(url, options);
+    responseCode = response.getResponseCode();
+  }
+
+  var responseBody = response.getContentText();
+  Logger.log("Response Body: " + responseBody);
+
+  if (responseCode === 200 || responseCode === 201) {
+    // Success
+    return JSON.parse(responseBody);
+  } else {
+    // Error
+    Logger.log('API call failed with response code: ' + responseCode);
+    Logger.log('Response message: ' + responseBody);
+    throw new Error('API call failed with response code: ' + responseCode);
+  }
+}
+
+

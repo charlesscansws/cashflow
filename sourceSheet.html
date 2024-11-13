@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Import Data</title>
+  <!-- Bootstrap CSS -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+  <!-- jQuery and Bootstrap JS -->
+  <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.bundle.min.js"></script>
+  <style>
+    /* Additional styles for the message container */
+    .message-container {
+      margin-top: 10px;
+      display: none; /* Hidden by default */
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h3>Select Sheets and Columns</h3>
+    <form id="importForm">
+      <!-- Target Sheet Selection -->
+      <div class="form-group">
+        <label for="targetSheet">Target Sheet:</label>
+        <select class="form-control" id="targetSheet" name="targetSheet">
+          <option value="">Select a sheet</option>
+        </select>
+      </div>
+      <!-- Message Container -->
+      <div id="messageContainer" class="message-container alert" role="alert"></div>
+      <!-- Source Sheets and Columns -->
+      <div class="form-group">
+        <label for="sourceSheets">Source Sheets and Columns:</label>
+        <div id="sourceSheetsContainer"></div>
+      </div>
+      <!-- Submit Button -->
+      <button type="button" class="btn btn-primary" onclick="processImport()">Import Data</button>
+    </form>
+  </div>
+
+  <!-- Scripts -->
+  <script>
+    var totalSelectedColumns = 0;
+
+    // Function to populate the dropdowns
+    function populateDropdowns() {
+      google.script.run.withSuccessHandler(function(sheets) {
+        var targetSheetSelect = document.getElementById('targetSheet');
+        sheets.forEach(function(sheet) {
+          var option = document.createElement('option');
+          option.value = sheet;
+          option.text = sheet;
+          targetSheetSelect.add(option);
+        });
+
+        // Event listener for when the target sheet changes
+        targetSheetSelect.addEventListener('change', function() {
+          // Rebuild the source sheets container
+          buildSourceSheetsContainer(sheets, this.value);
+        });
+
+        // Initial build of the source sheets container
+        buildSourceSheetsContainer(sheets, targetSheetSelect.value);
+      }).getSheetNames();
+    }
+
+    // Function to build the source sheets container
+    function buildSourceSheetsContainer(sheets, targetSheetName) {
+      var sourceSheetsContainer = document.getElementById('sourceSheetsContainer');
+      sourceSheetsContainer.innerHTML = ''; // Clear existing content
+
+      sheets.forEach(function(sheet) {
+        // Skip the target sheet in the source sheets
+        if (sheet !== targetSheetName && sheet !== '') {
+          var div = document.createElement('div');
+          div.className = 'card mb-2';
+          div.innerHTML = `
+            <div class="card-header">
+              <input type="checkbox" name="sourceSheets" value="${sheet}" onchange="toggleColumns('${sheet}', this.checked)">
+              ${sheet}
+            </div>
+            <div class="card-body" id="columns-${sheet}" style="display: none;">
+              <!-- Columns will be populated here -->
+            </div>
+          `;
+          sourceSheetsContainer.appendChild(div);
+        }
+      });
+    }
+
+    // Function to toggle columns visibility
+    function toggleColumns(sheetName, isChecked) {
+      var columnsDiv = document.getElementById('columns-' + sheetName);
+      if (isChecked) {
+        columnsDiv.style.display = 'block';
+        // Populate columns
+        google.script.run.withSuccessHandler(function(columns) {
+          columnsDiv.innerHTML = '';
+          columns.forEach(function(column, index) {
+            var columnId = 'column-' + sheetName + '-' + index;
+            var columnDiv = document.createElement('div');
+            columnDiv.className = 'form-group';
+            columnDiv.innerHTML = `
+              <div class="form-check">
+                <input class="form-check-input source-column-checkbox" type="checkbox" id="${columnId}" name="columns-${sheetName}" value="${column}" onchange="updateTotalSelectedColumns(this)">
+                <label class="form-check-label" for="${columnId}">${column}</label>
+              </div>
+              <div class="form-group">
+                <label for="targetColumn-${columnId}">Select Target Column:</label>
+                <select class="form-control targetColumnSelect" id="targetColumn-${columnId}" name="targetColumn-${sheetName}-${column}" disabled>
+                  <option value="">--Select Target Column--</option>
+                  <option value="B">Column B</option>
+                  <option value="C">Column C</option>
+                  <option value="D">Column D</option>
+                  <option value="E">Column E</option>
+                  <option value="F">Column F</option>
+                </select>
+              </div>
+            `;
+            columnsDiv.appendChild(columnDiv);
+          });
+        }).getSheetColumns(sheetName);
+      } else {
+        columnsDiv.style.display = 'none';
+        columnsDiv.innerHTML = '';
+      }
+    }
+
+    // Function to update total selected columns
+    function updateTotalSelectedColumns(checkbox) {
+      if (checkbox.checked) {
+        totalSelectedColumns++;
+      } else {
+        totalSelectedColumns--;
+      }
+      // Enforce maximum of 5 columns
+      if (totalSelectedColumns > 5) {
+        displayMessage('You cannot select more than 5 columns in total.', 'danger');
+        checkbox.checked = false;
+        totalSelectedColumns--;
+        return;
+      }
+      // Enable or disable the corresponding target column select
+      var targetColumnSelect = checkbox.parentElement.parentElement.querySelector('.targetColumnSelect');
+      targetColumnSelect.disabled = !checkbox.checked;
+    }
+
+    // Function to process the import
+    function processImport() {
+      var form = document.getElementById('importForm');
+      var formData = new FormData(form);
+
+      // Clear any existing messages
+      clearMessage();
+
+      // Validate target sheet selection
+      var targetSheet = formData.get('targetSheet');
+      if (!targetSheet) {
+        displayMessage('Please select a target sheet.', 'danger');
+        return;
+      }
+
+      // Validate total selected columns
+      if (totalSelectedColumns === 0) {
+        displayMessage('Please select at least one source column.', 'danger');
+        return;
+      }
+
+      // Convert FormData to a plain object, handling multiple values per key
+      var data = {};
+      formData.forEach(function(value, key) {
+        if (data[key]) {
+          if (!Array.isArray(data[key])) {
+            data[key] = [data[key]];
+          }
+          data[key].push(value);
+        } else {
+          data[key] = value;
+        }
+      });
+
+      // Validate that all selected source columns have a target column selected
+      var allValid = true;
+      var targetColumnsUsed = [];
+      for (var key in data) {
+        if (key.startsWith('columns-')) {
+          var sheetName = key.substring(8);
+          var columns = data[key];
+          if (!Array.isArray(columns)) {
+            columns = [columns];
+          }
+          columns.forEach(function(column) {
+            var targetColumnKey = 'targetColumn-' + sheetName + '-' + column;
+            var targetColumn = data[targetColumnKey];
+            if (!targetColumn) {
+              displayMessage('Please select a target column for "' + column + '" in sheet "' + sheetName + '".', 'danger');
+              allValid = false;
+            } else {
+              if (targetColumnsUsed.includes(targetColumn)) {
+                displayMessage('Target column "' + targetColumn + '" is already assigned.', 'danger');
+                allValid = false;
+              } else {
+                targetColumnsUsed.push(targetColumn);
+              }
+            }
+          });
+        }
+      }
+
+      if (allValid) {
+        // Optionally, log the data to the console for debugging
+        console.log('Data being sent to importData:', data);
+
+        google.script.run.withSuccessHandler(function() {
+          displayMessage('Data imported successfully!', 'success');
+          // Optionally close the dialog after a delay
+          setTimeout(function() {
+            google.script.host.close();
+          }, 2000);
+        }).withFailureHandler(function(error) {
+          displayMessage('Error during import: ' + error.message, 'danger');
+        }).importData(data);
+      }
+    }
+
+    // Function to display messages
+    function displayMessage(message, type) {
+      var messageContainer = document.getElementById('messageContainer');
+      messageContainer.className = 'message-container alert alert-' + type;
+      messageContainer.textContent = message;
+      messageContainer.style.display = 'block';
+    }
+
+    // Function to clear messages
+    function clearMessage() {
+      var messageContainer = document.getElementById('messageContainer');
+      messageContainer.style.display = 'none';
+      messageContainer.textContent = '';
+      messageContainer.className = 'message-container alert';
+    }
+
+    // Initialize the dropdowns on page load
+    document.addEventListener('DOMContentLoaded', populateDropdowns);
+  </script>
+</body>
+</html>

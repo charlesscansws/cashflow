@@ -8,7 +8,7 @@
     }]
   },
   "exceptionLogging": "STACKDRIVER",
-  "oauthScopes": ["https://www.googleapis.com/auth/script.deployments", "https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/script.external_request", "https://www.googleapis.com/auth/script.container.ui"],
+  "oauthScopes": ["https://www.googleapis.com/auth/script.deployments", "https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/script.external_request", "https://www.googleapis.com/auth/script.container.ui","https://www.googleapis.com/auth/script.external_request","https://www.googleapis.com/auth/drive"],
   "urlFetchWhitelist": ["https://scans.ws/*", "https://scans-jlh5l.ondigitalocean.app/api/verify-license", "https://sandbox-b2b.revolut.com/api/1.0", "https://sandbox-b2b.revolut.com/api/1.0/accounts", "https://sandbox-b2b.revolut.com/api/1.0/transactions", "https://sandbox-b2b.revolut.com/api/1.0/counterparties", "https://sandbox-b2b.revolut.com/api/1.0/counterparty", "https://sandbox-b2b.revolut.com/api/1.0/auth/token", "https://b2b.revolut.com/api/1.0", "https://b2b.revolut.com/api/1.0/accounts", "https://b2b.revolut.com/api/1.0/transactions", "https://b2b.revolut.com/api/1.0/counterparties", "https://b2b.revolut.com/api/1.0/counterparty", "https://b2b.revolut.com/api/1.0/auth/token"],
   "runtimeVersion": "V8",
   "addOns": {

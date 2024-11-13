@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Email Editor with TinyMCE, Sidebar, and Independent Accordions</title>
+
+  <!-- Bootstrap and Font Awesome CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" rel="stylesheet">
+
+  <!-- TinyMCE -->
+  <script src="https://cdn.tiny.cloud/1/e31smkk4recip5pqoojgi71uoiahfe2yvqw6t1xecugx9b0g/tinymce/6/tinymce.min.js" referrerpolicy="origin"></script>
+
+  <style>
+    /* Sidebar styling with fixed width */
+    .sidebar {
+      height: 100vh;
+      width: 80px;
+      background-color: #343a40;
+      position: fixed;
+      top: 0;
+      left: 0;
+      color: white;
+    }
+
+    .sidebar .nav-item {
+      width: 100%;
+      padding: 10px;
+      text-align: center;
+    }
+
+    .sidebar .nav-link {
+      color: white;
+      display: flex;
+      justify-content: center;
+    }
+
+    /* Hide text labels in the sidebar */
+    .sidebar .nav-link span {
+      display: none;
+    }
+
+    /* Content area styling to account for fixed sidebar width */
+    .content {
+      margin-left: 80px;
+      padding: 20px;
+    }
+  </style>
+</head>
+<body>
+<!-- Sidebar links in any HTML file, e.g., index.html -->
+<script> const deployUrl = "https://script.google.com/macros/s/AKfycbzfdLYf_mHam3GrbcO-t4fLUTr9DuxVyjrhHnbfJw5n/dev"; </script>
+<div id="sidebar" class="sidebar">
+  <ul class="nav flex-column mt-4">
+    <li class="nav-item">
+      <a class="nav-link" href="#" onclick="window.location.href = `${deployUrl}?page=index`">
+        <i class="fas fa-user-plus"></i>
+      </a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" href="#" onclick="window.location.href = `${deployUrl}?page=menuMail`">
+        <i class="fas fa-envelope"></i>
+      </a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" href="#" onclick="window.location.href = `${deployUrl}?page=folder`">
+        <i class="fas fa-folder-plus"></i>
+      </a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" href="#" onclick="window.location.href = `${deployUrl}?page=moveMoneyBetweenAccounts`">
+        <i class="fas fa-exchange-alt"></i>
+      </a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" href="#" onclick="window.location.href = `${deployUrl}?page=deleteCounterpartyForm`">
+        <i class="fas fa-user-times"></i>
+      </a>
+    </li>
+  </ul>
+</div>
+
+  <!-- Content Area -->
+  <div id="content" class="content">
+    <h1>Revolut Counterparty Manager</h1>
+    <p>Select an option from the menu to get started.</p>
+    <!-- Accordion with all content in one item -->
+    <div class="accordion" id="emailAccordion">
+      <div class="accordion-item">
+        <h2 class="accordion-header" id="headingEmailDetails">
+          <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseEmailDetails" aria-expanded="true" aria-controls="collapseEmailDetails">
+            Send Email
+          </button>
+        </h2>
+        <div id="collapseEmailDetails" class="accordion-collapse collapse show" aria-labelledby="headingEmailDetails" data-bs-parent="#emailAccordion">
+          <div class="accordion-body">
+            
+        <!-- From and To -->
+    <div class="row mb-3">
+      <div class="col-sm-6">
+      <label for="fromEmail" class="form-label">From</label>
+        <select id="fromEmail" class="form-select">
+        </select>
+      </div>
+      <div class="col-sm-6">
+      <label for="toEmail" class="form-label">To</label>
+        <input type="text" id="toEmail" class="form-control" placeholder="To">
+      </div>
+    </div>
+    <!-- Cc and Bcc -->
+    <div class="row mb-3">
+      <div class="col-sm-6">
+      <label for="ccEmail" class="form-label">Cc</label>
+        <input type="text" id="ccEmail" class="form-control" placeholder="Cc">
+      </div>
+      <div class="col-sm-6">
+      <label for="bccEmail" class="form-label">Bcc</label>
+        <input type="text" id="bccEmail" class="form-control" placeholder="Bcc">
+      </div>
+    </div>
+    <!-- Subject -->
+    <div class="row mb-3">
+      <div class="col-sm-4">
+        <div class="form-check">
+          <label for="checkbox" class="form-label">Subject</label>
+          <input type="checkbox" class="form-check-input" id="uniqueIdCheckbox" checked>
+          <label class="form-check-label" for="uniqueIdCheckbox">Unique email ID</label>
+        </div>
+      </div>
+      <div class="col-sm-8">
+        <input type="text" id="emailSubject" class="form-control" placeholder="Subject">
+      </div>
+    </div>
+
+    <!-- Load Template -->
+    <div class="row mb-3 align-items-center">
+      <div class="col-sm-2">
+        <label>Select Email Template</label>
+      </div>
+      <div class="col-sm-6">
+        <select id="fileSelect" class="form-select">
+        <option value="File">HTML File</option>
+        </select>
+      </div>
+      <div class="col-sm-4">
+        <button class="btn btn-info" id="loadTableBtn">Load</button>
+      </div>
+    </div>
+    <div class="mt-3">
+      <p class="message alert alert-info" role="alert" style="display:none;"></p>
+    </div>
+    <input type="hidden" name="id" id="fileId">
+    <div class="editor-container">
+      <textarea name="editor" id="editor"></textarea>
+    </div>
+    
+    <div class="tags-container">
+      <h5>Insert Tags</h5>
+      <div id="tags" class="d-flex flex-wrap gap-2"></div>
+    </div>
+
+    <div class="d-flex gap-2">
+      <button class="btn btn-primary" id="newFileBtn">New</button>
+      <button class="btn btn-secondary" id="pdfFileBtn">Generate PDF</button>
+      <button class="btn btn-warning" id="emailFileBtn">Send Email</button>
+    </div>
+    
+    <div style="padding: 10px 0px 0px 0px"></div>
+
+    <!-- New Template -->
+    <div class="row mb-3 align-items-center">
+      <div class="col-sm-3">
+        <label>Create New Template</label>
+      </div>
+      <div class="col-sm-6">
+        <input type="text" name="name" id="fileName" class="form-control" value="Name New Template">
+      </div>
+      <div class="col-sm-3">
+        <button class="btn btn-success" id="saveFileBtn">Save</button>
+      </div>
+    </div>
+    <div class="mt-3">
+      <p class="message alert alert-info" role="alert" style="display:none;"></p>
+    </div>
+    </div>
+    </div>
+    </div>
+  <!-- Script to Initialize and Handle Editor -->
+<script>
+    let editorInstance;
+    let spreadsheetId;
+    let sheetName;
+
+    const tags = [
+      "{{UNIQUEID}}", "{{FROM}}", "{{SENDERNAME}}", "{{TO}}", "{{CC}}", "{{BCC}}", "{{SUBJECT}}",
+      "{{HEADER}}", "{{SUBHEADER}}", "{{INTROTITLE}}", "{{INTRO}}", "{{TABLE}}", "{{FILE_LIST}}",
+      "{{OUTRO}}", "{{FOOTER}}", "{{NEWSTITLE}}", "{{NEWS01}}", "{{CONTENTNEWS01}}", "{{NEWS02}}",
+      "{{CONTENTNEWS02}}", "{{NEWS03}}", "{{CONTENTNEWS03}}", "{{DISCLAIMER}}"
+    ];
+
+  document.addEventListener("DOMContentLoaded", function() {
+    // Initialize TinyMCE editor
+    initializeEditor();
+    displayTags();
+
+
+    // Bind buttons after editor is loaded
+    document.getElementById('newFileBtn').addEventListener('click', createNew);
+    document.getElementById('saveFileBtn').addEventListener('click', saveFile);
+    document.getElementById('pdfFileBtn').addEventListener('click', makePDF);
+    document.getElementById('emailFileBtn').addEventListener('click', emailFile);
+
+    // Get the active spreadsheet and sheet details from Apps Script
+    google.script.run.withSuccessHandler(function(data) {
+      spreadsheetId = data.spreadsheetId;
+      sheetName = data.sheetName;
+      console.log("Spreadsheet ID:", spreadsheetId);
+      console.log("Sheet Name:", sheetName);
+    }).getActiveSpreadsheetDetails();
+
+    // Get available files from Apps Script and populate the file dropdown
+    google.script.run.withSuccessHandler(function(files) {
+      console.log('Files returned:', files);  // Log the files returned
+      populateFileSelect(files);  // Call the function to populate the dropdown
+    }).getHTMLFile();
+  });
+
+  // Function to populate the file selection dropdown
+  function populateFileSelect(files) {
+    const fileSelect = document.getElementById('fileSelect');
+    fileSelect.innerHTML = '';  // Clear existing options
+
+    if (files.length > 0) {
+      files.forEach(function(file) {
+        const option = document.createElement('option');
+        option.value = file.id;
+        option.textContent = file.name;
+        fileSelect.appendChild(option);
+      });
+
+      // Automatically select the first file and load it into the editor
+      fileSelect.value = files[0].id;
+      document.getElementById('fileId').value = files[0].id;
+      loadFile(files[0].id);
+    } else {
+      const option = document.createElement('option');
+      option.textContent = "No files found";
+      option.disabled = true;
+      fileSelect.appendChild(option);
+    }
+
+    // Handle file selection
+    fileSelect.addEventListener('change', function() {
+      const fileId = fileSelect.value;
+      if (fileId !== 'File') {
+        document.getElementById('fileId').value = fileId;
+        loadFile(fileId);
+      }
+    });
+  }
+   function displayTags() {
+      const tagsContainer = document.getElementById("tags");
+      tagsContainer.innerHTML = '';
+
+      tags.forEach(tag => {
+        const tagButton = document.createElement('button');
+        tagButton.textContent = tag;
+        tagButton.className = 'btn btn-outline-dark btn-sm tag-btn';
+        tagButton.type = 'button';
+        tagButton.onclick = function() { copyToClipboard(tag); };
+        tagsContainer.appendChild(tagButton);
+      });
+    }
+
+    function copyToClipboard(tag) {
+      navigator.clipboard.writeText(tag).then(() => {
+        showCopyNotification();
+      }).catch(err => {
+        console.error('Failed to copy text: ', err);
+      });
+    }
+
+    function showCopyNotification() {
+      const notification = document.getElementById('copyNotification');
+      notification.style.display = 'block';
+      setTimeout(() => {
+        notification.style.display = 'none';
+      }, 2000);
+    }
+  // Function to initialize TinyMCE
+  function initializeEditor() {
+    tinymce.init({
+      selector: '#editor',
+      height: 500,
+      plugins: 'print preview paste importcss searchreplace autolink autosave save directionality code visualblocks visualchars fullscreen image link media template codesample table charmap hr pagebreak nonbreaking anchor toc insertdatetime advlist lists wordcount imagetools textpattern noneditable help charmap quickbars emoticons',
+      toolbar: 'undo redo | bold italic underline strikethrough | fontselect fontsizeselect formatselect | alignleft aligncenter alignright alignjustify | outdent indent | numlist bullist | forecolor backcolor removeformat | pagebreak | charmap emoticons | fullscreen  preview save print | insertfile image media template link anchor codesample | ltr rtl',
+      setup: function (editor) {
+        editorInstance = editor;
+      }
+    });
+  }
+
+  // Load selected file's content into the editor
+  function loadFile(fileId) {
+    google.script.run.withSuccessHandler(function(content) {
+      tinymce.get("editor").setContent(content);
+    }).getContent(fileId);
+  }
+
+  // Function to save file
+  function saveFile() {
+    const data = tinymce.get("editor").getContent();
+    const id = document.getElementById('fileId').value;
+    const fileName = document.getElementById('fileName').value;
+
+    google.script.run.withSuccessHandler(function(response) {
+      document.querySelector('.message').textContent = response.rep;
+      document.getElementById('fileId').value = response.id;
+    }).updateHTML({
+      n: fileName,
+      html: data,
+      id: id
+    });
+  }
+
+  // Function to create a new empty file
+  function createNew() {
+    tinymce.get("editor").setContent('');
+    document.getElementById('fileId').value = '';
+    document.getElementById('fileName').value = 'New';
+  }
+
+  // Functions for PDF and Email (kept for completion)
+  function makePDF() {
+    // Functionality to generate a PDF
+  }
+
+    function emailFile() {
+      const emailBody = tinymce.get("editor").getContent();
+      const fileName = document.getElementById('fileName').value;
+
+      google.script.run.withSuccessHandler(function(response) {
+        const messageEl = document.querySelector('.message');
+        messageEl.textContent = response;
+        messageEl.style.display = 'block';
+      }).createEmailDraft(emailBody, fileName);
+    }
+</script>
+<script>
+  document.addEventListener("DOMContentLoaded", function() {
+    // Set default values for From, To, Cc, Bcc, and Subject fields from spreadsheet
+    google.script.run.withSuccessHandler(setEmailOptions).getUserEmails();
+    google.script.run.withSuccessHandler(setDefaultEmailFields).getDefaultEmailFields();
+
+    // Checkbox for unique email ID functionality
+    document.getElementById("uniqueIdCheckbox").addEventListener("change", function() {
+      const uniqueIdTag = "{{UNIQUEID}} - ";
+      const subjectField = document.getElementById("emailSubject");
+      let subjectValue = subjectField.value;
+
+      if (this.checked && !subjectValue.startsWith(uniqueIdTag)) {
+        subjectField.value = uniqueIdTag + subjectValue;
+      } else if (!this.checked && subjectValue.startsWith(uniqueIdTag)) {
+        subjectField.value = subjectValue.replace(uniqueIdTag, "");
+      }
+    });
+  });
+
+  // Set "From" dropdown options with user email and alias addresses
+  function setEmailOptions(emails) {
+    const fromEmailSelect = document.getElementById("fromEmail");
+    fromEmailSelect.innerHTML = ""; // Clear any existing options
+
+    emails.forEach((email, index) => {
+      const option = document.createElement("option");
+      option.value = email;
+      option.textContent = email;
+      fromEmailSelect.appendChild(option);
+
+      // Set default value as the first option (active user email)
+      if (index === 0) {
+        fromEmailSelect.value = email;
+      }
+    });
+  }
+
+  // Set default values from spreadsheet for To, Cc, Bcc, and Subject fields
+  function setDefaultEmailFields(data) {
+    document.getElementById("fromEmail").value = data.fromEmail || "";
+    document.getElementById("toEmail").value = data.toEmail || "";
+    document.getElementById("ccEmail").value = data.ccEmail || "";
+    document.getElementById("bccEmail").value = data.bccEmail || "";
+    document.getElementById("emailSubject").value = data.emailSubject || "";
+  }
+</script>
+<script>
+  document.addEventListener("DOMContentLoaded", function() {
+    initializeEditor();
+    displayTags();
+    bindButtons();
+
+    // Populate email fields and options from Google Sheets
+    google.script.run.withSuccessHandler(setEmailOptions).getUserEmails();
+
+    // Load default values from spreadsheet including Z9 for emailSubject
+    google.script.run.withSuccessHandler(function(data) {
+      const uniqueIdTag = "{{UNIQUEID}} - ";
+      const subjectField = document.getElementById("emailSubject");
+
+      // Add {{UNIQUEID}} - as prefix to Z9 content if not already present
+      subjectField.value = uniqueIdTag + (data.emailSubject || "").replace(new RegExp(`^${uniqueIdTag}`), "");
+    }).getDefaultEmailFields();
+
+    // Checkbox functionality to toggle unique ID in emailSubject
+    const uniqueIdCheckbox = document.getElementById("uniqueIdCheckbox");
+    uniqueIdCheckbox.addEventListener("change", function() {
+      const subjectField = document.getElementById("emailSubject");
+      const uniqueIdTag = "{{UNIQUEID}} - ";
+
+      // Toggle the prefix based on checkbox state
+      if (this.checked && !subjectField.value.startsWith(uniqueIdTag)) {
+        subjectField.value = uniqueIdTag + subjectField.value;
+      } else if (!this.checked && subjectField.value.startsWith(uniqueIdTag)) {
+        subjectField.value = subjectField.value.replace(uniqueIdTag, "");
+      }
+    });
+
+
+    // Load Table Button - first update Z3 with UNIQUEID, then proceed with other actions
+    document.getElementById('loadTableBtn').addEventListener('click', function() {
+      // Step 1: Generate unique ID and update Z3 in the spreadsheet
+      google.script.run.withSuccessHandler(function(uniqueId) {
+        // Step 2: Now that Z3 is updated, retrieve tag values including the new UNIQUEID from Z3
+        google.script.run.withSuccessHandler(function(data) {
+          let content = tinymce.get("editor").getContent();
+
+          // Replace {{UNIQUEID}} in the subject line and content
+          const subjectField = document.getElementById("emailSubject");
+          subjectField.value = subjectField.value.replace("{{UNIQUEID}}", uniqueId);
+
+          // Replace tags with their corresponding values from the spreadsheet in content
+          content = replaceTags(content, data);
+
+          // Step 3: Replace {{FILE_LIST}} with the HTML table content from generateFilteredHTMLTable
+          google.script.run.withSuccessHandler(function(htmlTable) {
+            content = content.replace("{{FILE_LIST}}", htmlTable);
+            // Update the editor with the replaced content
+            tinymce.get("editor").setContent(content);
+          }).generateFilteredHTMLTable();
+
+        }).getTagValues();
+      }).generateAndSetUniqueId(); // Custom function to generate ID and set Z3
+    });
+  });
+
+  // Initialize TinyMCE editor and display available tags
+  function initializeEditor() {
+    tinymce.init({
+      selector: '#editor',
+      height: 500,
+      plugins: 'print preview paste importcss searchreplace autolink autosave save directionality code visualblocks visualchars fullscreen image link media template codesample table charmap hr pagebreak nonbreaking anchor toc insertdatetime advlist lists wordcount imagetools textpattern noneditable help charmap quickbars emoticons',
+      toolbar: 'undo redo | bold italic underline strikethrough | fontselect fontsizeselect formatselect | alignleft aligncenter alignright alignjustify | outdent indent | numlist bullist | forecolor backcolor removeformat | pagebreak | charmap emoticons | fullscreen preview save print | insertfile image media template link anchor codesample | ltr rtl',
+      setup: (editor) => { editorInstance = editor; }
+    });
+  }
+
+  function displayTags() {
+    const tagsContainer = document.getElementById("tags");
+    tagsContainer.innerHTML = '';
+
+    const tags = [
+      "{{UNIQUEID}}", "{{FROM}}", "{{SENDERNAME}}", "{{TO}}", "{{CC}}", "{{BCC}}", "{{SUBJECT}}",
+      "{{HEADER}}", "{{SUBHEADER}}", "{{INTROTITLE}}", "{{INTRO}}", "{{TABLE}}", "{{FILE_LIST}}",
+      "{{OUTRO}}", "{{FOOTER}}", "{{NEWSTITLE}}", "{{NEWS01}}", "{{CONTENTNEWS01}}", "{{NEWS02}}",
+      "{{CONTENTNEWS02}}", "{{NEWS03}}", "{{CONTENTNEWS03}}", "{{DISCLAIMER}}"
+    ];
+
+    tags.forEach(tag => {
+      const tagButton = document.createElement('button');
+      tagButton.textContent = tag;
+      tagButton.className = 'btn btn-outline-dark btn-sm tag-btn';
+      tagButton.type = 'button';
+      tagButton.onclick = () => copyToClipboard(tag);
+      tagsContainer.appendChild(tagButton);
+    });
+  }
+
+  function bindButtons() {
+    document.getElementById('newFileBtn').addEventListener('click', createNew);
+    document.getElementById('saveFileBtn').addEventListener('click', saveFile);
+    document.getElementById('pdfFileBtn').addEventListener('click', makePDF);
+    document.getElementById('emailFileBtn').addEventListener('click', emailFile);
+  }
+
+  function copyToClipboard(tag) {
+    navigator.clipboard.writeText(tag).then(() => showCopyNotification())
+      .catch(err => console.error('Failed to copy text: ', err));
+  }
+
+  function showCopyNotification() {
+    const notification = document.getElementById('copyNotification');
+    notification.style.display = 'block';
+    setTimeout(() => { notification.style.display = 'none'; }, 2000);
+  }
+
+  // Function to replace tags in content based on retrieved data
+  function replaceTags(content, data) {
+    return content
+      .replace("{{UNIQUEID}}", escapeAndFormat(data.UNIQUEID))
+      .replace("{{FROM}}", escapeAndFormat(data.FROM))
+      .replace("{{SENDERNAME}}", escapeAndFormat(data.SENDERNAME))
+      .replace("{{TO}}", escapeAndFormat(data.TO))
+      .replace("{{CC}}", escapeAndFormat(data.CC))
+      .replace("{{BCC}}", escapeAndFormat(data.BCC))
+      .replace("{{SUBJECT}}", escapeAndFormat(data.SUBJECT))
+      .replace("{{HEADER}}", escapeAndFormat(data.HEADER))
+      .replace("{{SUBHEADER}}", escapeAndFormat(data.SUBHEADER))
+      .replace("{{INTROTITLE}}", escapeAndFormat(data.INTROTITLE))
+      .replace("{{INTRO}}", escapeAndFormat(data.INTRO))
+      .replace("{{OUTRO}}", escapeAndFormat(data.OUTRO))
+      .replace("{{FOOTER}}", escapeAndFormat(data.FOOTER))
+      .replace("{{NEWSTITLE}}", escapeAndFormat(data.NEWSTITLE))
+      .replace("{{NEWS01}}", escapeAndFormat(data.NEWS01))
+      .replace("{{CONTENTNEWS01}}", escapeAndFormat(data.CONTENTNEWS01))
+      .replace("{{NEWS02}}", escapeAndFormat(data.NEWS02))
+      .replace("{{CONTENTNEWS02}}", escapeAndFormat(data.CONTENTNEWS02))
+      .replace("{{NEWS03}}", escapeAndFormat(data.NEWS03))
+      .replace("{{CONTENTNEWS03}}", escapeAndFormat(data.CONTENTNEWS03))
+      .replace("{{DISCLAIMER}}", escapeAndFormat(data.DISCLAIMER));
+  }
+
+  // Function to escape HTML characters and format line breaks
+  function escapeAndFormat(value) {
+    if (typeof value === 'string') {
+      return value
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/\n/g, '<br>');
+    }
+    return value;
+  }
+</script>
+  <!-- Latest Bootstrap 5 JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+
+      <!-- Accordion for Embedded Google Sheet -->
+    <div style="padding: 10px 0px 0px 0px"></div>
+    <div class="accordion" id="spreadsheet2">
+      <div class="accordion-item">
+        <h2 class="accordion-header" id="headingSheetDetails">
+          <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSheetDetails" aria-expanded="true" aria-controls="collapseSheetDetails">
+            Spreadsheet Details
+          </button>
+        </h2>
+        <div id="collapseSheetDetails" class="accordion-collapse collapse show" aria-labelledby="headingSheetDetails">
+          <div class="accordion-body">
+            <h1>Embedded Spreadsheet</h1>
+            <p>Edit the spreadsheet directly below:</p>
+            <iframe src="https://docs.google.com/spreadsheets/d/1LmEziJQBUgeKMrUnbIXU62eXFSIr_4dQmmT6znQ351c/edit?usp=sharing&rm=minimal" width="100%" height="600" frameborder="0" allowfullscreen></iframe>
+          </div>
+        </div>
+      </div>
+    </div>
+</body>
+</html>
