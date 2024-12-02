@@ -49,37 +49,40 @@
   </style>
 </head>
 <body>
-<!-- Sidebar links in any HTML file, e.g., index.html -->
-<script> const deployUrl = "https://script.google.com/macros/s/AKfycbzfdLYf_mHam3GrbcO-t4fLUTr9DuxVyjrhHnbfJw5n/dev"; </script>
-<div id="sidebar" class="sidebar">
-  <ul class="nav flex-column mt-4">
-    <li class="nav-item">
-      <a class="nav-link" href="#" onclick="window.location.href = `${deployUrl}?page=index`">
-        <i class="fas fa-user-plus"></i>
-      </a>
-    </li>
-    <li class="nav-item">
-      <a class="nav-link" href="#" onclick="window.location.href = `${deployUrl}?page=menuMail`">
-        <i class="fas fa-envelope"></i>
-      </a>
-    </li>
-    <li class="nav-item">
-      <a class="nav-link" href="#" onclick="window.location.href = `${deployUrl}?page=folder`">
-        <i class="fas fa-folder-plus"></i>
-      </a>
-    </li>
-    <li class="nav-item">
-      <a class="nav-link" href="#" onclick="window.location.href = `${deployUrl}?page=moveMoneyBetweenAccounts`">
-        <i class="fas fa-exchange-alt"></i>
-      </a>
-    </li>
-    <li class="nav-item">
-      <a class="nav-link" href="#" onclick="window.location.href = `${deployUrl}?page=deleteCounterpartyForm`">
-        <i class="fas fa-user-times"></i>
-      </a>
-    </li>
-  </ul>
-</div>
+  <!-- Sidebar -->
+  <div id="sidebar" class="sidebar">
+    <ul class="nav flex-column mt-4">
+      <li class="nav-item">
+        <a class="nav-link" href="#"><i class="fas fa-user-plus"></i></a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="#"><i class="fas fa-envelope"></i></a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="#"><i class="fas fa-folder-plus"></i></a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="#"><i class="fas fa-exchange-alt"></i></a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="#"><i class="fas fa-user"></i></a>
+      </li>
+    </ul>
+  </div>
+
+  <!-- JavaScript to Set Sidebar Links -->
+  <script>
+    google.script.run.withSuccessHandler(function(scriptUrl) {
+      // Define the pages for each link in the order they appear in the sidebar
+      const pages = ['index', 'menuMail', 'folder', 'moveMoneyBetweenAccounts', 'contact'];
+      const links = document.querySelectorAll("#sidebar a.nav-link");
+
+      // Loop through each link and set the href to the corresponding page
+      links.forEach((link, index) => {
+        link.href = `${scriptUrl}?page=${pages[index]}`;
+      });
+    }).getScriptUrl();
+  </script>
 
   <!-- Content Area -->
   <div id="content" class="content">
@@ -558,7 +561,14 @@
           <div class="accordion-body">
             <h1>Embedded Spreadsheet</h1>
             <p>Edit the spreadsheet directly below:</p>
-            <iframe src="https://docs.google.com/spreadsheets/d/1LmEziJQBUgeKMrUnbIXU62eXFSIr_4dQmmT6znQ351c/edit?usp=sharing&rm=minimal" width="100%" height="600" frameborder="0" allowfullscreen></iframe>
+            <script>
+              google.script.run.withSuccessHandler(function(url) {
+                document.getElementById('sheetIframe').src = url;
+              }).getActiveSheetUrlMinimal();
+            </script>
+
+            <iframe id="sheetIframe" width="100%" height="600" frameborder="0" allowfullscreen></iframe>
+
           </div>
         </div>
       </div>

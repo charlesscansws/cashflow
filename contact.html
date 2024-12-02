@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sidebar Navigation</title>
+  <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+  <!-- Sidebar -->
+  <div id="sidebar" class="sidebar">
+    <ul class="nav flex-column mt-4">
+      <li class="nav-item">
+        <a class="nav-link" href="#"><i class="fas fa-user-plus"></i></a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="#"><i class="fas fa-envelope"></i></a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="#"><i class="fas fa-folder-plus"></i></a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="#"><i class="fas fa-exchange-alt"></i></a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="#"><i class="fas fa-user"></i></a>
+      </li>
+    </ul>
+  </div>
+
+  <!-- JavaScript to Set Sidebar Links -->
+  <script>
+    google.script.run.withSuccessHandler(function(scriptUrl) {
+      // Define the pages for each link in the order they appear in the sidebar
+      const pages = ['index', 'menuMail', 'folder', 'moveMoneyBetweenAccounts', 'contact'];
+      const links = document.querySelectorAll("#sidebar a.nav-link");
+
+      // Loop through each link and set the href to the corresponding page
+      links.forEach((link, index) => {
+        link.href = `${scriptUrl}?page=${pages[index]}`;
+      });
+    }).getScriptUrl();
+  </script>
+
+<!-- Main Content -->
+  <div class="content" style="margin-left: 80px; padding: 20px;">
+    <h1>Contact Page</h1>
+    <!-- Include the main content of your contact page here -->
+    <div class="container-fluid">
+      <div class="row">
+        <div class="col-md-12">
+          <h4>Contact(s)</h4>
+          <p>Here you can manage your contacts.</p>
+          <!-- Your contact-specific content and functionality -->
+        </div>
+      </div>
+    </div>
+  </div></body>
+</html>

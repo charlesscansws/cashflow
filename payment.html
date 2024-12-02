@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Filtered Cash Flow</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+        .container {
+            padding: 20px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+        }
+        th {
+            background-color: #f4f4f4;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 80%;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            z-index: 10;
+        }
+        .overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 9;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        select, button {
+            padding: 8px;
+            font-size: 16px;
+        }
+        .filters {
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h3>Filtered Cash Flow</h3>
+        
+        <!-- Filters -->
+        <div class="filters">
+            <div class="form-group">
+                <label for="filterTo">Filter by To</label>
+                <select id="filterTo">
+                    <option value="">All</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="filterStatus">Filter by Status</label>
+                <select id="filterStatus">
+                    <option value="">All</option>
+                </select>
+            </div>
+            <button onclick="applyFilters()">Apply Filters</button>
+        </div>
+
+        <!-- Table -->
+        <table id="cashFlowTable">
+            <thead>
+                <tr id="headerRow"></tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+
+        <!-- Review Payments Button -->
+        <button id="reviewPaymentsButton" onclick="reviewSelectedPayments()">Review Payments</button>
+    </div>
+
+    <!-- Review Modal -->
+    <div class="overlay" id="overlay" onclick="closeModal()"></div>
+    <div class="modal" id="reviewModal">
+        <h3>Review Selected Payments</h3>
+        <table id="reviewTable">
+            <thead>
+                <tr>
+                    <th>From Account</th>
+                    <th>Paying Agent</th>
+                    <th>CCY</th>
+                    <th>Amount</th>
+                    <th>Reference</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+        <button onclick="submitPayments()">Submit Payments</button>
+        <button onclick="closeModal()">Close</button>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            google.script.run
+                .withSuccessHandler(function(data) {
+                    populateTable(data.headers, data.rows);
+                    populateFilters(data.rows);
+                })
+                .withFailureHandler(function(error) {
+                    console.error("Error fetching data:", error);
+                })
+                .getFilteredCashFlowData();
+        });
+
+        function populateTable(headers, rows) {
+            const headerRow = document.getElementById('headerRow');
+            const tableBody = document.querySelector('#cashFlowTable tbody');
+            headerRow.innerHTML = ['Select', ...headers].map(header => `<th>${header}</th>`).join('');
+            tableBody.innerHTML = rows.map((row, i) => `
+                <tr>
+                    <td><input type="checkbox" data-index="${i}"></td>
+                    ${row.display.map(cell => `<td>${cell || ''}</td>`).join('')}
+                </tr>`).join('');
+        }
+
+        function populateFilters(rows) {
+            const toSet = new Set(rows.map(row => row.filters[0] || ''));
+            const statusSet = new Set(rows.map(row => row.filters[1] || ''));
+
+            const filterTo = document.getElementById('filterTo');
+            const filterStatus = document.getElementById('filterStatus');
+
+            filterTo.innerHTML = '<option value="">All</option>';
+            filterStatus.innerHTML = '<option value="">All</option>';
+
+            toSet.forEach(to => {
+                const option = document.createElement('option');
+                option.value = to;
+                option.textContent = to;
+                filterTo.appendChild(option);
+            });
+
+            statusSet.forEach(status => {
+                const option = document.createElement('option');
+                option.value = status;
+                option.textContent = status;
+                filterStatus.appendChild(option);
+            });
+        }
+
+        function applyFilters() {
+            const filterTo = document.getElementById('filterTo').value;
+            const filterStatus = document.getElementById('filterStatus').value;
+
+            google.script.run
+                .withSuccessHandler(function(data) {
+                    const filteredRows = data.rows.filter(row => {
+                        const toMatch = !filterTo || row.filters[0] === filterTo;
+                        const statusMatch = !filterStatus || row.filters[1] === filterStatus;
+                        return toMatch && statusMatch;
+                    });
+                    populateTable(data.headers, filteredRows);
+                })
+                .withFailureHandler(function(error) {
+                    console.error("Error applying filters:", error);
+                })
+                .getFilteredCashFlowData();
+        }
+
+        function reviewSelectedPayments() {
+            const table = document.getElementById('cashFlowTable');
+            const selectedCheckboxes = Array.from(table.querySelectorAll('input[type="checkbox"]:checked'));
+
+            if (selectedCheckboxes.length === 0) {
+                alert('Please select at least one payment.');
+                return;
+            }
+
+            // Get indices of selected rows
+            const selectedIndices = selectedCheckboxes.map(checkbox => parseInt(checkbox.dataset.index, 10));
+
+            // Call server-side function with selected indices
+            google.script.run
+                .withSuccessHandler(showReviewModal)
+                .withFailureHandler(error => alert(`Error: ${error.message}`))
+                .getSelectedPaymentDetails(selectedIndices);
+
+            // Ensure checkboxes stay checked
+            selectedCheckboxes.forEach(checkbox => (checkbox.checked = true));
+        }
+
+            document.addEventListener('DOMContentLoaded', function () {
+              document.getElementById('reviewPaymentsButton').addEventListener('click', event => {
+                  event.preventDefault();
+                  reviewSelectedPayments();
+              });
+          });
+
+
+        function showReviewModal(selectedPayments) {
+            const overlay = document.getElementById('overlay');
+            const reviewModal = document.getElementById('reviewModal');
+            const tableBody = document.getElementById('reviewTable').querySelector('tbody');
+
+            // Populate modal with selected payment details
+            tableBody.innerHTML = selectedPayments.map(payment => `
+                <tr>
+                    <td>${payment.fromAccountDetails || ''}</td>
+                    <td>${payment.payingAgentDetails || ''}</td>
+                    <td>${payment.ccy || ''}</td>
+                    <td>${payment.amount || ''}</td>
+                    <td>${payment.reference || ''}</td>
+                </tr>
+            `).join('');
+
+            // Show modal and overlay
+            overlay.style.display = 'block';
+            reviewModal.style.display = 'block';
+        }
+
+        function closeModal() {
+            document.getElementById('overlay').style.display = 'none';
+            document.getElementById('reviewModal').style.display = 'none';
+        }
+
+        function submitPayments() {
+            const rows = Array.from(document.querySelectorAll('#reviewTable tbody tr')).map(tr => {
+                const cells = tr.querySelectorAll('td');
+                return {
+                    fromAccount: cells[0].textContent.trim(),
+                    payingAgent: cells[1].textContent.trim(),
+                    currency: cells[2].textContent.trim(),
+                    amount: parseFloat(cells[3].textContent.trim()),
+                    reference: cells[4].textContent.trim(),
+                };
+            });
+
+            google.script.run
+                .withSuccessHandler(response => {
+                    alert('Payments submitted successfully.');
+                    closeModal();
+                })
+                .withFailureHandler(error => {
+                    alert(`Error submitting payments: ${error.message}`);
+                })
+                .submitPayments(rows);
+        }
+    </script>
+</body>
+</html>

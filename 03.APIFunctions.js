@@ -15,7 +15,7 @@ function removeDuplicateRows(sheet, lastImportStartRow, lastImportNumRows) {
   // Define the column index based on the sheet name
   let duplicateCheckColumnIndex;
   if (sheetName === 'API - Counterparties') {
-    duplicateCheckColumnIndex = 2; // Column C for Counterparties (0-based index for `getValues()`)
+    //duplicateCheckColumnIndex = 3; // Column D for Counterparties (0-based index for `getValues()`)
   } else if (sheetName === 'API - Accounts' || sheetName === 'API - Transactions') {
     duplicateCheckColumnIndex = 1; // Column B for Accounts and Transactions
   } else {

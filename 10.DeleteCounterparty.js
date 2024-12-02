@@ -27,7 +27,7 @@ function getFilteredCounterparties(accountName, counterpartyName) {
 
   const filteredData = dataRange.filter(row => {
     const matchesAccount = !accountName || row[0] === accountName;
-    const matchesCounterparty = !counterpartyName || row[2] === counterpartyName; // Column D now for counterparty name
+    const matchesCounterparty = !counterpartyName || row[1] === counterpartyName; // Column C now for counterparty name
     return matchesAccount && matchesCounterparty;
   }).map(row => ({
     counterpartyId: row[1],             // Corrected to pull ID from column C

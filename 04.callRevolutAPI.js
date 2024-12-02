@@ -139,8 +139,8 @@ function callRevolutAPI(endpoint, accountName) {
               '', // Placeholder
               accountName,
               item.id || '',
-              //account.id || '',
               item.name || '',
+              //account.id || '',
               item.revtag || '',
               //item.state || '',
               //item.created_at || '',
@@ -162,8 +162,8 @@ function callRevolutAPI(endpoint, accountName) {
                   '', // Placeholder
                   accountName,
                   item.id || '',
-                 //no account.id || '',
                   item.name || '',
+                 //no account.id || '',
                   item.revtag || '',
                   //item.state || '',
                   //item.created_at || '',
@@ -230,55 +230,6 @@ function callRevolutAPI(endpoint, accountName) {
 }
 
 // Function to handle POST/UPDATE requests to the Revolut API
-function XcallRevolutAPIMethodPOST(endpoint, accountName, data) {
-  // Ensure we're using the correct endpoint for creating a counterparty
-  var url = 'https://b2b.revolut.com/api/1.0/' + endpoint;
-  Logger.log("Final URL: " + url);
-  
-  var tokens = getAccountTokens(accountName);
-
-  if (!tokens) {
-    throw new Error('No tokens found for account: ' + accountName);
-  }
-
-  var headers = {
-    'Authorization': 'Bearer ' + tokens.clientAssertion,
-    'Content-Type': 'application/json'
-  };
-
-  var options = {
-    'method': 'post', // POST for creating
-    'headers': headers,
-    'payload': JSON.stringify(data), // Convert the data object to a JSON string
-    'muteHttpExceptions': true // Allow handling of HTTP errors
-  };
-
-  var response = UrlFetchApp.fetch(url, options);
-  var responseCode = response.getResponseCode();
-
-  if (responseCode === 401) {
-    // Refresh the token and retry the request
-    var newClientAssertion = refreshAuthToken(accountName);
-    tokens.clientAssertion = newClientAssertion;
-    updateAccountTokens(accountName, newClientAssertion, tokens.refreshToken);
-
-    // Retry the request with the new token
-    headers['Authorization'] = 'Bearer ' + newClientAssertion;
-    options.headers = headers;
-    response = UrlFetchApp.fetch(url, options);
-  } else if (responseCode !== 200 && responseCode !== 201) {
-    // Log detailed error message if request fails
-    Logger.log('API call failed with response code: ' + responseCode);
-    Logger.log('Response message: ' + response.getContentText());
-    throw new Error('API call failed with response code: ' + responseCode);
-  }
-
-  // Log the response from the API
-  var responseBody = response.getContentText();
-  Logger.log("Response Body: " + responseBody);
-  
-  return JSON.parse(responseBody);
-}
 
 function callRevolutAPIMethodPOST(endpoint, accountName, data) {
   var url = 'https://b2b.revolut.com/api/1.0/' + endpoint;
@@ -326,4 +277,43 @@ function callRevolutAPIMethodPOST(endpoint, accountName, data) {
   }
 }
 
+//Function for handling the transfer request:
 
+function initiateTransfer(data) {
+  const url = 'https://b2b.revolut.com/api/1.0/transfer';
+  const tokens = getAccountTokens(data.fromAccount);
+
+  if (!tokens) {
+    throw new Error('No tokens found for account: ' + data.fromAccount);
+  }
+
+  const payload = {
+    request_id: Utilities.getUuid(), // Unique ID for the request
+    account_id: data.fromAccount,
+    beneficiary_id: data.toAccount,
+    amount: parseFloat(data.amount).toFixed(2),
+    currency: data.currency,
+    reference: data.reference || 'No reference',
+  };
+
+  const options = {
+    method: 'post',
+    contentType: 'application/json',
+    headers: {
+      Authorization: 'Bearer ' + tokens.clientAssertion,
+    },
+    payload: JSON.stringify(payload),
+    muteHttpExceptions: true,
+  };
+
+  const response = UrlFetchApp.fetch(url, options);
+  const responseCode = response.getResponseCode();
+
+  if (responseCode === 200 || responseCode === 201) {
+    Logger.log('Transfer successful: ' + response.getContentText());
+    return JSON.parse(response.getContentText());
+  } else {
+    Logger.log('Transfer failed: ' + response.getContentText());
+    throw new Error('Transfer failed: ' + response.getContentText());
+  }
+}

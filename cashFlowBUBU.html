@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Cash Flow Data Entry</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+        .form-container {
+            max-width: 800px;
+            margin: auto;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background: #f9f9f9;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        input, select, textarea {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        .readonly {
+            background-color: #e9ecef;
+        }
+        #logDisplay {
+            background-color: #f4f4f4;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            overflow-y: auto;
+            max-height: 150px;
+            white-space: pre-wrap;
+            font-family: monospace;
+        }
+        #existingTags {
+            font-size: 0.9em;
+            color: #555;
+            margin-top: -10px;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+        }
+        .button-group {
+            text-align: center;
+            margin-top: 20px;
+        }
+        button {
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            background-color: #007bff;
+            color: white;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div class="form-container">
+        <form id="cashFlowForm">
+            <!-- ID -->
+            <div class="form-group">
+                <label for="id">ID (Auto-generated)</label>
+                <input type="text" id="id" name="ID" class="readonly" readonly />
+            </div>
+
+            <!-- Data Entry Date -->
+            <div class="form-group">
+                <label for="dataEntryDate">Data Entry Date</label>
+                <input type="text" id="dataEntryDate" name="DATA_ENTRY_DATE" class="readonly" readonly />
+            </div>
+
+            <!-- Document Date -->
+            <div class="form-group">
+                <label for="documentDate">Document Date</label>
+                <input type="date" id="documentDate" name="DOCUMENT_DATE" />
+            </div>
+
+            <!-- Payment Due Date -->
+            <div class="form-group">
+                <label for="paymentDueDate">Payment Due Date</label>
+                <input type="date" id="paymentDueDate" name="PAYMENT_DUE_DATE" />
+            </div>
+
+            <!-- Status -->
+            <div class="form-group">
+                <label for="status">Status</label>
+                <select id="status" name="STATUS">
+                    <option value="0.Budget">0.Budget</option>
+                    <option value="1.Under Review">1.Under Review</option>
+                    <option value="2.Submit to Payment Governance">2.Submit to Payment Governance</option>
+                    <option value="3.Back Office Processing">3.Back Office Processing</option>
+                    <option value="4.Invoice Validated">4.Invoice Validated</option>
+                    <option value="5.Payment Sent for Execution">5.Payment Sent for Execution</option>
+                    <option value="6.Payment Executed">6.Payment Executed</option>
+                    <option value="7.Invoice On Hold">7.Invoice On Hold</option>
+                    <option value="8.Invoice Discarded">8.Invoice Discarded</option>
+                    <option value="9.Duplicata/Already Processed">9.Duplicata/Already Processed</option>
+                </select>
+            </div>
+
+            <!-- Column E: Log Display -->
+            <div class="form-group">
+                <label for="logDisplay">Status Log (Read-only)</label>
+                <div id="logDisplay" class="readonly"></div>
+            </div>
+
+            <!-- Column F: Group -->
+            <div class="form-group">
+                <label for="group">Group (Tags)</label>
+                <small id="existingGroup" style="display: block; margin-bottom: 10px; color: #555; font-size: 0.9em;">
+                    Loading groups...
+                </small>
+                <input type="text" id="group" name="GROUP" oninput="this.value = this.value.toUpperCase()" />
+            </div>
+
+            <!-- Column G: Category -->
+            <div class="form-group">
+                <label for="category">Category (Single Tag, No Commas)</label>
+                <small id="existingCategory" style="display: block; margin-bottom: 10px; color: #555; font-size: 0.9em;">
+                    Loading categories...
+                </small>
+                <input
+                    type="text"
+                    id="category"
+                    name="CATEGORY"
+                    oninput="validateCategory(this)"
+                    required
+                />
+            </div>
+            <!-- COUNTERPART (Column H) -->
+            <div class="form-group">
+                <label for="counterpart">Counterpart</label>
+                <select id="counterpart" name="COUNTERPART" required>
+                    <option value="" disabled selected>Select Counterpart</option>
+                    <option value="Provider">Provider</option>
+                    <option value="Bank">Bank</option>
+                    <option value="Tax">Tax</option>
+                    <option value="Expenses">Expenses</option>
+                    <option value="Salary">Salary</option>
+                    <option value="Other">Other</option>
+                </select>
+            </div>
+
+            <!-- REFERENCE (Column I) -->
+            <div class="form-group">
+                <label for="reference">Reference</label>
+                <textarea id="reference" name="REFERENCE" maxlength="100" required rows="3" 
+                          placeholder="Enter reference (max 100 characters)."></textarea>
+                <small id="referenceHelp" style="color: #555; font-size: 0.9em;">Maximum 100 characters. Press Enter to break lines.</small>
+            </div>
+            <!-- CCY (Column J) -->
+            <div class="form-group">
+                <label for="ccy">Currency (ISO Code)</label>
+                <select id="ccy" name="CCY" required>
+                    <option value="" disabled selected>Select Currency</option>
+                    <option value="EUR">EUR</option>
+                    <option value="CHF">CHF</option>
+                    <option value="USD">USD</option>
+                    <option value="GBP">GBP</option>
+                    <option value="JPY">JPY</option>
+                    <option value="AUD">AUD</option>
+                    <option value="CAD">CAD</option>
+                    <option value="CNY">CNY</option>
+                    <option value="SEK">SEK</option>
+                    <option value="NZD">NZD</option>
+                    <!-- Add more ISO 4217 codes as needed -->
+                </select>
+            </div>
+
+            <!-- VAT (Column K) -->
+            <div class="form-group">
+                <label for="vat">VAT</label>
+                <textarea id="vat" name="VAT" maxlength="10" required rows="1"
+                          placeholder="Enter VAT (max 10 characters)."></textarea>
+                <small id="vatHelp" style="color: #555; font-size: 0.9em;">VAT amount or %</small>
+            </div>
+            <!-- AMOUNT (Column L) -->
+            <div class="form-group">
+                <label for="amount">Amount</label>
+                <textarea id="amount" name="AMOUNT" maxlength="10" required rows="1"
+                          placeholder="Enter amount (numbers only)."></textarea>
+                <small id="amountHelp" style="color: #555; font-size: 0.9em;"></small>
+            </div>
+
+            <!-- INSTALLMENT (Column M) -->
+            <div class="form-group">
+                <label for="installment">Installment</label>
+                <textarea id="installment" name="INSTALLMENT" maxlength="10" required rows="1"
+                          placeholder="Enter installment (numbers only)."></textarea>
+                <small id="installmentHelp" style="color: #555; font-size: 0.9em;"></small>
+            </div>
+            <!-- PAYMENT_MODE (Column N) -->
+            <div class="form-group">
+                <label for="paymentMode">Payment Mode</label>
+                <select id="paymentMode" name="PAYMENT_MODE" required>
+                    <option value="" disabled selected>Select Payment Mode</option>
+                    <option value="E-Banking">E-Banking</option>
+                    <option value="Direct Debit">Direct Debit</option>
+                    <option value="Email">Email</option>
+                    <option value="Card">Card</option>
+                    <option value="Other">Other</option>
+                </select>
+            </div>
+            <!-- PURPOSE (Column O) -->
+            <div class="form-group">
+                <label for="purpose">Purpose</label>
+                <textarea id="purpose" name="PURPOSE" maxlength="300" required rows="5" 
+                          placeholder="Enter purpose (max 300 characters)."></textarea>
+                <small id="purposeHelp" style="color: #555; font-size: 0.9em;">Maximum 300 characters. Press Enter to break lines.</small>
+            </div>
+            <!-- TO (Column Q) -->
+            <div class="form-group">
+                <label for="to">To</label>
+                <select id="to" name="TO" required onchange="populateFromDropdown()">
+                    <option value="" disabled selected>Select Account</option>
+                    <!-- Options populated dynamically -->
+                </select>
+            </div>
+
+            <!-- FROM (Column R) -->
+            <div class="form-group">
+                <label for="from">From</label>
+                <select id="from" name="FROM" required>
+                    <option value="" disabled selected>Select Counterparty</option>
+                    <!-- Options populated dynamically -->
+                </select>
+            </div>
+            <!-- FROM_ACCOUNT (Column S) -->
+            <div class="form-group">
+                <label for="fromAccount">From Account</label>
+                <select id="fromAccount" name="FROM_ACCOUNT" required>
+                    <option value="" disabled selected>Select From Account</option>
+                    <!-- Options will be populated dynamically -->
+                </select>
+            </div>
+            <!-- PAYING_AGENT (Column T) -->
+            <div class="form-group">
+                <label for="payingAgent">Paying Agent</label>
+                <select id="payingAgent" name="PAYING_AGENT" required>
+                    <option value="" disabled selected>Select Paying Agent</option>
+                    <!-- Options will be populated dynamically -->
+                </select>
+            </div>
+            <!-- ACCOUNT (Column U) -->
+            <div class="form-group">
+                <label for="account">Account</label>
+                <select id="account" name="ACCOUNT" required>
+                    <option value="" disabled selected>Select Account</option>
+                    <!-- Options populated dynamically -->
+                </select>
+            </div>
+            <!-- BANK (Column V) -->
+            <div class="form-group">
+                <label for="bank">Bank</label>
+                <select id="bank" name="BANK" required>
+                    <option value="" disabled selected>Select Bank</option>
+                    <option value="Revolut">Revolut Ltd</option>
+                    <option value="Other">Other Bank</option>
+                </select>
+            </div>
+            <!-- DEBIT_CREDIT (Column W) -->
+            <div class="form-group">
+                <label for="debitCredit">Debit/Credit</label>
+                <select id="debitCredit" name="DEBIT_CREDIT" required>
+                    <option value="" disabled selected>Select Type</option>
+                    <option value="Debit">Debit</option>
+                    <option value="Credit">Credit</option>
+                </select>
+            </div>
+
+            <!-- Buttons -->
+            <div class="button-group">
+                <button type="button" onclick="saveRow()">Save Data</button>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        // Generate Unique ID
+        function generateUniqueId() {
+            return Math.floor(Date.now() / 1000).toString(36).toUpperCase();
+        }
+
+        // Prepopulate fields
+        document.getElementById("id").value = generateUniqueId();
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById("dataEntryDate").value = today;
+
+        // Fetch and display log content for the selected row
+        function fetchAndDisplayLog() {
+            const id = document.getElementById("id").value;
+            google.script.run
+                .withSuccessHandler(logContent => {
+                    document.getElementById("logDisplay").innerHTML = logContent || "No log available.";
+                })
+                .withFailureHandler(err => {
+                    console.error("Error fetching log:", err);
+                    document.getElementById("logDisplay").innerHTML = "Error fetching log.";
+                })
+                .getLogContent(id);
+        }
+
+        // Populate existing categories on page load
+        document.addEventListener("DOMContentLoaded", () => {
+                    google.script.run.withSuccessHandler(displayCategories).getExistingCategories();
+                });
+
+                // Display categories as comma-separated values below the input field
+                function displayCategories(categories) {
+                    const categoryElement = document.getElementById("existingCategory");
+                    categoryElement.innerText = categories.join(", ").toUpperCase();
+                }
+
+        // Fetch unique tags for Column F
+        function fetchExistingTags() {
+            google.script.run.withSuccessHandler(tags => {
+                const tagText = tags.length
+                    ? tags.map(tag => tag.toUpperCase()).join(", ") // Convert tags to uppercase
+                    : "No tags available.";
+                document.getElementById("existingTags").textContent = tagText;
+            }).getExistingTags();
+        }
+        function validateCategory(input) {
+            input.value = input.value.toUpperCase().replace(/,/g, ""); // Remove commas and ensure uppercase
+        }
+</script>
+
+<script>
+    // Populate existing groups for Column F
+    function displayGroups(groups) {
+        const groupElement = document.getElementById("existingGroup");
+        groupElement.innerText = groups.join(", ").toUpperCase();
+    }
+
+    // Populate existing categories for Column G
+    function displayCategories(categories) {
+        const categoryElement = document.getElementById("existingCategory");
+        categoryElement.innerText = categories.join(", ").toUpperCase();
+    }
+
+    // Validation for CATEGORY (No commas allowed, uppercase enforced)
+    function validateCategory(input) {
+        input.value = input.value.toUpperCase().replace(/,/g, ""); // Remove commas
+    }
+
+    // Fetch existing tags for both GROUP and CATEGORY on page load
+    document.addEventListener("DOMContentLoaded", () => {
+        google.script.run.withSuccessHandler(displayGroups).getExistingGroups();
+        google.script.run.withSuccessHandler(displayCategories).getExistingCategories();
+    });
+</script>
+<script>
+    // Fetch and populate "TO" dropdown (Column Q)
+    function populateToDropdown() {
+        const toDropdown = document.getElementById("to");
+
+        google.script.run
+            .withSuccessHandler(options => {
+                // Clear existing options
+                toDropdown.innerHTML = '<option value="" disabled selected>Select Account</option>';
+
+                // Populate new options
+                options.forEach(option => {
+                    const opt = document.createElement("option");
+                    opt.value = option;
+                    opt.textContent = option;
+                    toDropdown.appendChild(opt);
+                });
+            })
+            .withFailureHandler(err => {
+                console.error("Error fetching TO dropdown options:", err);
+                alert("Failed to load accounts. Please try again.");
+            })
+            .getToDropdownOptions(); // A Google Apps Script function to fetch options
+    }
+
+    // Call the function on page load
+    document.addEventListener("DOMContentLoaded", populateToDropdown);
+</script>
+<script>
+// Fetch and populate "FROM" dropdown (Column R)
+function populateFromDropdown() {
+  const columnQValue = document.getElementById("to").value; // Get value from Column Q dropdown
+
+  google.script.run
+    .withSuccessHandler(options => {
+      const fromDropdown = document.getElementById("from");
+      fromDropdown.innerHTML = ""; // Clear existing options
+
+      options.forEach(option => {
+        const optionElement = document.createElement("option");
+        optionElement.value = option;
+        optionElement.textContent = option;
+        fromDropdown.appendChild(optionElement);
+      });
+
+      // Add default "Select Counterparty" if multiple options
+      if (options.length > 1) {
+        const defaultOption = document.createElement("option");
+        defaultOption.value = "";
+        defaultOption.textContent = "Select Counterparty";
+        defaultOption.disabled = true;
+        defaultOption.selected = true;
+        fromDropdown.prepend(defaultOption);
+      }
+    })
+    .getFromDropdownOptions(columnQValue);
+}
+</script>
+<script>
+    // Column T Function to populate the PAYING_AGENT dropdown dynamically
+    function populatePayingAgentDropdown() {
+        google.script.run.withSuccessHandler(options => {
+            const payingAgentDropdown = document.getElementById("payingAgent");
+            payingAgentDropdown.innerHTML = ""; // Clear existing options
+
+            // Add the default placeholder option
+            const placeholder = document.createElement("option");
+            placeholder.value = "";
+            placeholder.disabled = true;
+            placeholder.selected = true;
+            placeholder.textContent = "Select Paying Agent";
+            payingAgentDropdown.appendChild(placeholder);
+
+            // Add the options dynamically
+            options.forEach(option => {
+                const opt = document.createElement("option");
+                opt.value = option;
+                opt.textContent = option;
+                payingAgentDropdown.appendChild(opt);
+            });
+        }).populatePayingAgentOptions();
+    }
+
+    // Call the populate function when the page loads
+    document.addEventListener("DOMContentLoaded", populatePayingAgentDropdown);
+</script>
+<script>
+    // Function to populate the ACCOUNT dropdown dynamically
+    function populateAccountDropdown() {
+        const toValue = document.getElementById("to").value; // Value from TO (Column Q)
+        const fromValue = document.getElementById("from").value; // Value from FROM (Column R)
+        const ccyValue = document.getElementById("ccy").value; // Value from CCY (Column J)
+
+        if (toValue && fromValue && ccyValue) {
+            const combinedKey = `${toValue}¦¦${fromValue}¦¦${ccyValue}`; // Combine key with "¦¦"
+            google.script.run
+                .withSuccessHandler(function(options) {
+                    const accountDropdown = document.getElementById("account");
+                    accountDropdown.innerHTML = ""; // Clear existing options
+                    if (options.length > 0) {
+                        // Populate new options
+                        accountDropdown.innerHTML = `<option value="" disabled selected>Select Account</option>`;
+                        options.forEach(option => {
+                            const opt = document.createElement("option");
+                            opt.value = option;
+                            opt.textContent = option;
+                            accountDropdown.appendChild(opt);
+                        });
+                    } else {
+                        accountDropdown.innerHTML = `<option value="" disabled>No matching accounts</option>`;
+                    }
+                })
+                .withFailureHandler(function(err) {
+                    console.error("Error populating ACCOUNT dropdown:", err);
+                    alert("Failed to load account options.");
+                })
+                .getAccountOptions(combinedKey);
+        }
+    }
+
+    // Trigger dropdown population when TO, FROM, or CCY values change
+    document.getElementById("to").addEventListener("change", populateAccountDropdown);
+    document.getElementById("from").addEventListener("change", populateAccountDropdown);
+    document.getElementById("ccy").addEventListener("change", populateAccountDropdown);
+</script>
+
+<script>
+
+        // Save Row Function
+        function saveRow() {
+            const form = document.getElementById("cashFlowForm");
+            const data = {};
+            new FormData(form).forEach((value, key) => {
+                if (key === "CATEGORY") {
+                    data[key] = value.trim().toUpperCase(); // Ensure CATEGORY is uppercased
+                } else if (key === "GROUP") {
+                    data[key] = value.trim().toUpperCase(); // Uppercase GROUP (if used)
+                } else {
+                    data[key] = value.trim();
+                }
+            });
+
+            console.log("Prepared data to send:", JSON.stringify(data)); // Debug the data being sent
+
+            // Add CATEGORY as a required field
+            const requiredFields = [
+                "ID",
+                "DATA_ENTRY_DATE",
+                "DOCUMENT_DATE",
+                "PAYMENT_DUE_DATE",
+                "STATUS",
+                "CATEGORY",
+                "COUNTERPART",
+                "REFERENCE",
+                "CCY",
+                "AMOUNT",
+                "PURPOSE",
+                "PAYMENT_MODE",
+                "STATUS",
+                "DEBIT_CREDIT",
+                "BANK",
+
+            ];
+
+            const missingFields = requiredFields.filter(field => !data[field] || data[field].trim() === "");
+
+            if (missingFields.length > 0) {
+                alert(`Data is incomplete or invalid. Please check the form.\nMissing fields: ${missingFields.join(", ")}`);
+                console.error("Incomplete data:", data);
+                return;
+            }
+
+            google.script.run
+                .withSuccessHandler(() => alert("Row saved successfully!"))
+                .withFailureHandler(err => console.error("Error saving row:", err))
+                .saveCashFlowData(data);
+        }
+
+    </script>
+</body>
+</html>

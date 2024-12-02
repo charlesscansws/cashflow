@@ -1,6 +1,39 @@
 /**
  * CODE.GS FILE
  */
+
+function getScriptUrl() {
+  return ScriptApp.getService().getUrl();
+}
+
+
+function getActiveSpreadsheetUrl() {
+  return SpreadsheetApp.getActiveSpreadsheet().getUrl();
+}
+
+
+function getActiveSheetUrlMinimal() {
+  const url = SpreadsheetApp.getActiveSpreadsheet().getUrl();
+  return `${url}?rm=minimal`;
+}
+
+function doGet(e) {
+  const page = e.parameter.page;
+
+  if (page === 'contact') {
+    return HtmlService.createHtmlOutputFromFile('contact').setTitle('Contact Page');
+  } else if (page === 'menuMail') {
+    return HtmlService.createHtmlOutputFromFile('menuMail').setTitle('Menu Mail');
+  } else if (page === 'folder') {
+    return HtmlService.createHtmlOutputFromFile('folder').setTitle('Folder');
+  } else if (page === 'moveMoneyBetweenAccounts') {
+    return HtmlService.createHtmlOutputFromFile('moveMoneyBetweenAccounts').setTitle('Move Money');
+  } else {
+    return HtmlService.createHtmlOutputFromFile('index').setTitle('Home');
+  }
+}
+
+/////////////////////////////////////////////////////////////////
 function sendtoEmail(data) {
   var userEmail = Session.getActiveUser().getEmail();
   var message = 'Completed: Email sent to ' + userEmail;
@@ -254,47 +287,6 @@ function fileExist(val) {
     };
   }
   return found;
-}
-
-function doGet(e) {
-  var data = {};
-  data.message = "Hello World 4";  // Test message
-
-  // Fetch HTML file data
-  try {
-    var files = getHTMLFile(); 
-    if (files.length > 0) {
-      data.files = files;  // Attach files to the data object
-    } else {
-      data.files = [];  // Set as empty array if no files are found
-    }
-  } catch (error) {
-    Logger.log("Error fetching files: " + error.toString());
-    data.files = [];
-  }
-
-  // Handle the case where an ID parameter is provided
-  if (e && e.parameters && 'id' in e.parameters) {
-    var q = e.parameters['id'][0];
-    var check = fileExist(q);
-    if (check) {
-      data.id = check.id;
-      data.name = check.name;
-      data.html = getContent(check.id);
-    }
-  } else {
-    data.id = '';
-    data.html = '';
-  }
-
-  Logger.log("Files: " + JSON.stringify(data.files));
-  Logger.log("Selected ID: " + data.id);
-
-  // Pass the data object to the template
-  var temp = HtmlService.createTemplateFromFile('EditorPopup');
-  temp.data = data;
-  var html = temp.evaluate();
-  return html;
 }
 
 /////////////////

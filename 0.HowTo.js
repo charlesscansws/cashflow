@@ -1,3 +1,9 @@
+function testOpenModal() {
+    document.getElementById('paymentModal').style.display = 'flex';
+}
+
+
+
 /**
  * 
  * When I mention "Make Changes Locally", I mean editing the code files on your own computer, specifically in the folder where you set up Clasp and Git (C:\Users\charl\OneDrive\Documents\GAS - REVOLUT).
@@ -35,6 +41,11 @@ Node.js
 C:\Users\charl>cd "C:\Users\charl\OneDrive\Documents\GAS - REVOLUT"
 C:\Users\charl\OneDrive\Documents\GAS - REVOLUT>clasp pull
 C:\Users\charl\OneDrive\Documents\GAS - REVOLUT>clasp push
+
+git remote -v
+git remote add https://github.com/charlesscansws/GAS-Revolut.git
+
+
 
 git add .
 git commit -m "Describe the changes you made"
